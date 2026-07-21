@@ -7,6 +7,7 @@ export type InterestSignal =
 
 export type InterestSignalCounts = Record<InterestSignal, number>;
 
+export const INTEREST_SIGNAL_EVENT = "ipo-quality-score:interest-signals";
 const STORAGE_KEY = "ipo-quality-score.interest-signals.v1";
 
 const EMPTY_COUNTS: InterestSignalCounts = {
@@ -23,6 +24,10 @@ function sessionStore(): Storage | null {
   } catch {
     return null;
   }
+}
+
+function publish(counts: InterestSignalCounts): void {
+  window.dispatchEvent(new CustomEvent<InterestSignalCounts>(INTEREST_SIGNAL_EVENT, { detail: counts }));
 }
 
 export function readInterestSignals(): InterestSignalCounts {
@@ -57,10 +62,13 @@ export function recordInterestSignal(signal: InterestSignal): InterestSignalCoun
   const next = readInterestSignals();
   next[signal] += 1;
   sessionStore()?.setItem(STORAGE_KEY, JSON.stringify(next));
+  publish(next);
   return next;
 }
 
 export function clearInterestSignals(): InterestSignalCounts {
   sessionStore()?.removeItem(STORAGE_KEY);
-  return { ...EMPTY_COUNTS };
+  const next = { ...EMPTY_COUNTS };
+  publish(next);
+  return next;
 }
