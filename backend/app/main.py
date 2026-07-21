@@ -1,0 +1,150 @@
+from __future__ import annotations
+
+import logging
+from collections.abc import Iterator
+from contextlib import asynccontextmanager
+
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from backend.app.config import Settings
+from backend.app.database import Database
+from backend.app.models import ReportRecord
+from backend.app.schemas import (
+    HealthResponse,
+    ReportDetail,
+    ReportListResponse,
+    ReportSummary,
+)
+from backend.app.services import get_latest_report, get_report, import_reports, list_reports
+
+logger = logging.getLogger(__name__)
+
+
+def _summary(record: ReportRecord) -> ReportSummary:
+    return ReportSummary.model_validate(record)
+
+
+def _detail(record: ReportRecord) -> ReportDetail:
+    return ReportDetail(
+        summary=_summary(record),
+        document=record.report_document,
+        source_hash=record.source_hash,
+        imported_at=record.updated_at,
+    )
+
+
+def create_app(settings: Settings | None = None) -> FastAPI:
+    resolved = settings or Settings.from_env()
+    database = Database(resolved.database_url)
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        app.state.settings = resolved
+        app.state.database = database
+        if resolved.auto_create_schema:
+            database.create_schema()
+        if resolved.import_reports_on_startup and resolved.reports_root.exists():
+            with database.session_factory() as session:
+                stats = import_reports(
+                    session,
+                    resolved.reports_root,
+                    resolved.schema_path,
+                )
+            logger.info(
+                "report import complete: created=%s updated=%s unchanged=%s",
+                stats.created,
+                stats.updated,
+                stats.unchanged,
+            )
+        yield
+        database.dispose()
+
+    app = FastAPI(
+        title=resolved.app_name,
+        version=resolved.app_version,
+        lifespan=lifespan,
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(resolved.cors_origins),
+        allow_credentials=False,
+        allow_methods=["GET"],
+        allow_headers=["*"],
+    )
+
+    def get_session(request: Request) -> Iterator[Session]:
+        with request.app.state.database.session_factory() as session:
+            yield session
+
+    @app.get("/health", response_model=HealthResponse, tags=["system"])
+    def health(session: Session = Depends(get_session)) -> HealthResponse:
+        count = session.scalar(select(func.count()).select_from(ReportRecord))
+        return HealthResponse(
+            service=resolved.app_name,
+            version=resolved.app_version,
+            reports=int(count or 0),
+        )
+
+    @app.get(
+        "/api/v1/reports",
+        response_model=ReportListResponse,
+        tags=["reports"],
+    )
+    def reports_index(
+        ticker: str | None = Query(default=None, min_length=1, max_length=32),
+        status: str | None = Query(default=None, min_length=1, max_length=32),
+        min_score: float | None = Query(default=None, ge=0, le=100),
+        limit: int = Query(default=20, ge=1, le=100),
+        offset: int = Query(default=0, ge=0),
+        session: Session = Depends(get_session),
+    ) -> ReportListResponse:
+        items, total = list_reports(
+            session,
+            ticker=ticker,
+            status=status,
+            min_score=min_score,
+            limit=limit,
+            offset=offset,
+        )
+        return ReportListResponse(
+            items=[_summary(item) for item in items],
+            total=total,
+            limit=limit,
+            offset=offset,
+        )
+
+    @app.get(
+        "/api/v1/reports/by-ticker/{ticker}/latest",
+        response_model=ReportDetail,
+        tags=["reports"],
+    )
+    def latest_by_ticker(
+        ticker: str,
+        session: Session = Depends(get_session),
+    ) -> ReportDetail:
+        record = get_latest_report(session, ticker)
+        if record is None:
+            raise HTTPException(status_code=404, detail="report not found")
+        return _detail(record)
+
+    @app.get(
+        "/api/v1/reports/{report_id}",
+        response_model=ReportDetail,
+        tags=["reports"],
+    )
+    def report_detail(
+        report_id: str,
+        session: Session = Depends(get_session),
+    ) -> ReportDetail:
+        record = get_report(session, report_id)
+        if record is None:
+            raise HTTPException(status_code=404, detail="report not found")
+        return _detail(record)
+
+    return app
+
+
+app = create_app()
