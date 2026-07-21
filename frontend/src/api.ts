@@ -1,3 +1,9 @@
+import {
+  ContractError,
+  parseReportDetail,
+  parseReportListResponse,
+  parseReportProvenance,
+} from "./contracts";
 import type {
   ReportDetail,
   ReportListResponse,
@@ -16,7 +22,22 @@ export class ApiError extends Error {
   }
 }
 
-async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+export class ApiContractError extends Error {
+  readonly path: string;
+
+  constructor(path: string, cause: ContractError) {
+    super(`Backend response did not match the frontend contract: ${cause.message}`);
+    this.name = "ApiContractError";
+    this.path = path;
+    this.cause = cause;
+  }
+}
+
+async function fetchJson<T>(
+  path: string,
+  parse: (value: unknown) => T,
+  signal?: AbortSignal,
+): Promise<T> {
   const init: RequestInit = {
     headers: {
       Accept: "application/json",
@@ -30,8 +51,13 @@ async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   if (!response.ok) {
     let detail = `Request failed with status ${response.status}`;
     try {
-      const body = (await response.json()) as { detail?: string };
-      if (body.detail) {
+      const body: unknown = await response.json();
+      if (
+        typeof body === "object" &&
+        body !== null &&
+        "detail" in body &&
+        typeof body.detail === "string"
+      ) {
         detail = body.detail;
       }
     } catch {
@@ -39,7 +65,16 @@ async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
     }
     throw new ApiError(detail, response.status);
   }
-  return (await response.json()) as T;
+
+  const payload: unknown = await response.json();
+  try {
+    return parse(payload);
+  } catch (error) {
+    if (error instanceof ContractError) {
+      throw new ApiContractError(path, error);
+    }
+    throw error;
+  }
 }
 
 export interface ReportFilters {
@@ -59,15 +94,20 @@ export function getReports(
   if (filters.ticker?.trim()) {
     params.set("ticker", filters.ticker.trim().toUpperCase());
   }
-  return fetchJson<ReportListResponse>(`/api/v1/reports?${params.toString()}`, signal);
+  return fetchJson(
+    `/api/v1/reports?${params.toString()}`,
+    parseReportListResponse,
+    signal,
+  );
 }
 
 export function getReport(
   reportId: string,
   signal?: AbortSignal,
 ): Promise<ReportDetail> {
-  return fetchJson<ReportDetail>(
+  return fetchJson(
     `/api/v1/reports/${encodeURIComponent(reportId)}`,
+    parseReportDetail,
     signal,
   );
 }
@@ -76,8 +116,9 @@ export function getReportProvenance(
   reportId: string,
   signal?: AbortSignal,
 ): Promise<ReportProvenance> {
-  return fetchJson<ReportProvenance>(
+  return fetchJson(
     `/api/v1/reports/${encodeURIComponent(reportId)}/provenance`,
+    parseReportProvenance,
     signal,
   );
 }
