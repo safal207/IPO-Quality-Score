@@ -24,25 +24,10 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  unit:
     runs-on: ubuntu-latest
     env:
-      IQS_TEST_POSTGRES_URL: postgresql+psycopg://postgres:postgres@localhost:5432/ipo_quality_score
       PYTHONPATH: .
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: ipo_quality_score
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d ipo_quality_score"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -74,6 +59,40 @@ jobs:
 
       - name: Run migration and schema-drift tests on SQLite
         run: pytest backend/tests/test_migrations.py -q
+
+  postgres:
+    needs: unit
+    runs-on: ubuntu-latest
+    env:
+      IQS_TEST_POSTGRES_URL: postgresql+psycopg://postgres:postgres@localhost:5432/ipo_quality_score
+      PYTHONPATH: .
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ipo_quality_score
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ipo_quality_score"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install backend dependencies
+        run: python -m pip install --quiet --requirement backend/requirements-dev.txt
 
       - name: Run PostgreSQL migration and API integration
         run: pytest backend/tests/test_postgres_integration.py -q
