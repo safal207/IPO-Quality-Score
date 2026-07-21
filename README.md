@@ -59,18 +59,18 @@ The report always publishes score, evidence coverage, and confidence separately.
 
 These bands describe research findings, not expected market returns.
 
-## First real report
+## Real benchmark reports
 
-The repository includes an AI-assisted draft assessment of **ITG, Inc.** based on its final July 2026 prospectus:
+| Issuer | Score | Coverage | Confidence | State |
+|---|---:|---:|---|---|
+| [ITG, Inc.](reports/itg-2026-07-01/README.md) | 55/100 | 100% | Medium | Draft |
+| [Ethos Technologies](reports/ethos-2026-01-30/README.md) | 61/100 | 100% | Medium | Draft |
 
-- score: **55/100**;
-- evidence coverage: **100%**;
-- confidence: **medium**;
-- status: **draft** pending human and external legal review.
+ITG tests leverage, debt-repair proceeds, Up-C control, TRA obligations, lock-up, and sponsor governance. Ethos tests profitable growth, secondary selling, persistency-estimate revenue, carrier concentration, dual-class voting, and internal-control quality.
 
-The second evidence pass corrected a material interpretation issue: continuing owners hold **83.90%** of combined voting power and economic interests, not 62.45%. The report also includes reproducible equity-value, enterprise-value, leverage, lock-up, and incentive-overhang calculations.
+The comparison demonstrates that operating strength and IPO quality are not the same thing. Ethos has the stronger operating profile, but its offering alignment, voting structure, concentration, cash conversion, and disclosure risks prevent a high score.
 
-See [`reports/itg-2026-07-01/README.md`](reports/itg-2026-07-01/README.md).
+See [`research/benchmark-status.md`](research/benchmark-status.md) for the benchmark matrix and next research target.
 
 ## Repository structure
 
@@ -79,6 +79,7 @@ docs/          methodology, evidence policy, architecture, legal boundary, roadm
 schema/        machine-readable report contract
 scripts/       deterministic report validation
 reports/       real filing-based research drafts
+research/      benchmark queue and status
 examples/      fictional examples
 templates/     reusable report templates
 ```
