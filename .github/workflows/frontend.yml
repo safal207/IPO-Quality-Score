@@ -49,7 +49,18 @@ jobs:
 
       - name: Run interest loop component tests
         working-directory: frontend
-        run: npx vitest run src/interest-loop.test.tsx --reporter=verbose
+        shell: bash
+        run: |
+          set -o pipefail
+          npx vitest run src/interest-loop.test.tsx --reporter=verbose 2>&1 | tee interest-loop-test-output.txt
+
+      - name: Upload interest loop test output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: interest-loop-test-output
+          path: frontend/interest-loop-test-output.txt
+          retention-days: 1
 
       - name: Type-check and build
         working-directory: frontend
