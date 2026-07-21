@@ -38,8 +38,6 @@ The commercial product can combine:
 
 **Goal:** Define a trustworthy research contract.
 
-Deliverables:
-
 - [x] Score v0.1 dimensions and weights
 - [x] Evidence policy
 - [x] Legal and product boundary
@@ -48,30 +46,31 @@ Deliverables:
 - [x] Fictional example report
 - [x] JSON Schema and cross-field validation in CI
 - [x] Contribution and correction policy
+- [x] First real filing-based draft with all ten dimensions scored
+- [x] Reproducible valuation, leverage, control, lock-up, and dilution calculations
 
 Exit condition:
 
-A reviewer can produce the same report structure without inventing fields or hiding unknowns.
+A reviewer can produce the same report structure without inventing fields or hiding unknowns, and CI independently verifies the report contract and arithmetic summary.
 
 ## Phase 1 — Manual concierge MVP
 
-**Goal:** Validate whether investors will pay for better filtering before building a large platform.
+**Goal:** Validate whether readers will pay for better filtering before building a large platform.
 
 Current progress:
 
-- [x] First real AI-assisted draft report from a final public filing: ITG, Inc.
-- [ ] Independent human review of the ITG evidence and score
-- [ ] Complete valuation and legal/regulatory dimensions for ITG
-
-Deliverables:
-
-- 5 human-reviewed IPO reports;
-- one public weekly digest;
-- one paid research tier;
-- Telegram or email delivery;
-- reader feedback form;
-- correction log;
-- conversion and retention tracking.
+- [x] First filing-based draft report: ITG, Inc.
+- [x] Complete filing-based valuation and legal/regulatory dimensions for ITG
+- [x] Correct the continuing-owner control interpretation from 62.45% to 83.90%
+- [x] Raise machine-readable evidence coverage to 100%
+- [ ] Independent human review of ITG evidence and scoring
+- [ ] Independent peer-company benchmark for ITG
+- [ ] External litigation and regulatory database review
+- [ ] Four additional human-reviewed IPO reports
+- [ ] Public weekly digest
+- [ ] Paid research tier
+- [ ] Telegram or email delivery
+- [ ] Reader feedback and correction workflow
 
 Suggested validation targets:
 
@@ -84,8 +83,6 @@ Suggested validation targets:
 
 **Goal:** Make reports reproducible before adding autonomous AI behavior.
 
-Pipeline:
-
 ```text
 source registry
   -> filing snapshot
@@ -97,39 +94,21 @@ source registry
   -> publication artifact
 ```
 
-Deliverables:
+Next deliverables:
 
-- source snapshot identifiers;
-- calculation library;
-- report linter;
-- score and coverage validator;
+- reusable calculation library;
 - duplicate and stale-evidence detection;
 - amendment supersession workflow;
-- correction and audit history.
+- correction and audit history;
+- generated HTML or PDF publication artifact.
 
 ## Phase 3 — AI-assisted analysis
 
-**Goal:** Reduce analyst time without lowering evidence quality.
+AI may locate sections, propose extracted facts, compare filing versions, classify risk language, draft summaries, and identify possible contradictions.
 
-AI may:
+AI may not independently publish a report, invent missing data, hide contradictions, alter methodology, personalize allocations, or claim that a score predicts returns.
 
-- locate relevant sections;
-- propose extracted facts;
-- compare filing versions;
-- classify risk language;
-- draft dimension summaries;
-- identify possible contradictions.
-
-AI may not independently:
-
-- publish a report;
-- invent missing data;
-- resolve material contradictions silently;
-- alter scoring methodology;
-- create personalized allocation advice;
-- claim that a score predicts returns.
-
-Deliverables:
+Required controls:
 
 - extraction confidence;
 - reviewer acceptance or rejection;
@@ -139,79 +118,41 @@ Deliverables:
 
 ## Phase 4 — Historical calibration
 
-**Goal:** Test whether score dimensions are stable and useful, without overfitting to share-price outcomes.
+Track filing-time score, evidence coverage, amendments, first-day and 30/90/365-day performance, earnings revisions, lock-up events, dilution, restatements, litigation, and regulatory events.
 
-Track:
-
-- filing-time score;
-- evidence coverage;
-- score revisions after amendments;
-- first-day, 30-day, 90-day, and 365-day performance;
-- earnings revisions;
-- lock-up events;
-- dilution and secondary offerings;
-- delistings, restatements, litigation, and regulatory events.
-
-Calibration must distinguish:
-
-- business quality;
-- valuation quality;
-- disclosure quality;
-- market regime;
-- realized share-price return.
-
-A good company can be a poor offering at an excessive valuation. A weak company can rise temporarily. The methodology must not collapse these concepts into one hindsight label.
+Calibration must distinguish business quality, valuation quality, disclosure quality, market regime, and realized price return. A good company can still be a poor offering at an excessive valuation.
 
 ## Phase 5 — Subscription product
 
-Possible tiers:
-
 ### Free
 
-- IPO calendar;
-- short issuer profiles;
-- selected public reports;
-- delayed alerts.
+IPO calendar, short profiles, selected public reports, and delayed alerts.
 
 ### Pro
 
-- full evidence-linked reports;
-- score and confidence history;
-- filing-change alerts;
-- watchlists;
-- weekly research digest;
-- exports.
+Full evidence-linked reports, score history, filing-change alerts, watchlists, weekly digest, and exports.
 
 ### Expert
 
-- deeper scenario analysis;
-- post-IPO 30/90/180-day monitoring;
-- group research sessions;
-- portfolio-independent comparison tools;
-- advanced evidence and contradiction views.
+Deeper scenarios, post-IPO monitoring, group research sessions, and advanced evidence views.
 
 ### B2B
 
-- API access;
-- white-label reports;
-- analyst workflow tools;
-- structured data feeds;
-- custom monitoring and exports.
+API access, white-label reports, workflow tools, structured feeds, and custom monitoring.
 
 Pricing should be tested with real customers rather than fixed from assumptions.
 
 ## North-star metrics
 
-- report publication cycle time;
-- percentage of material claims with primary evidence;
+- publication cycle time;
+- primary-evidence coverage;
 - reviewer rejection rate for AI extractions;
-- correction rate and correction severity;
+- correction rate and severity;
 - score coverage and confidence distribution;
-- free-to-paid conversion;
-- paid retention;
-- report usage and alert engagement;
-- user-reported decisions improved or risks discovered.
+- free-to-paid conversion and retention;
+- report and alert engagement;
+- user-reported risks discovered.
 
 ## Immediate next milestone
 
-Complete the human review of the ITG draft, resolve its valuation and legal/regulatory unknowns, and preserve the report as `draft` until the publication gate passes. In parallel, choose four additional operating-company IPOs so the methodology can be tested across different business models rather than calibrated to one issuer.
+Select four additional IPOs across different structures: one profitable operating company, one pre-profit issuer, one sponsor-controlled issuer, and one founder-controlled issuer. Produce comparable drafts while ITG receives independent human and external legal review.
