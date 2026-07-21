@@ -11,14 +11,26 @@ from sqlalchemy.orm import Session
 
 from backend.app.config import Settings
 from backend.app.database import Database
-from backend.app.models import ReportRecord
+from backend.app.models import FilingRecord, ReportRecord
 from backend.app.schemas import (
+    FilingHistoryResponse,
+    FilingSummary,
+    FilingVersionSummary,
     HealthResponse,
+    IssuerSummary,
     ReportDetail,
     ReportListResponse,
+    ReportProvenance,
     ReportSummary,
+    SourceSnapshotSummary,
 )
-from backend.app.services import get_latest_report, get_report, import_reports, list_reports
+from backend.app.services import (
+    get_filing,
+    get_latest_report,
+    get_report,
+    import_reports,
+    list_reports,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +45,37 @@ def _detail(record: ReportRecord) -> ReportDetail:
         document=record.report_document,
         source_hash=record.source_hash,
         imported_at=record.updated_at,
+    )
+
+
+def _provenance(record: ReportRecord) -> ReportProvenance:
+    version = record.filing_version
+    if version is None:
+        raise HTTPException(status_code=409, detail="report provenance is not linked")
+    filing = version.filing
+    return ReportProvenance(
+        report=_summary(record),
+        issuer=IssuerSummary.model_validate(filing.issuer),
+        filing=FilingSummary.model_validate(filing),
+        filing_version=FilingVersionSummary.model_validate(version),
+        sources=[
+            SourceSnapshotSummary.model_validate(item)
+            for item in sorted(record.source_snapshots, key=lambda source: source.id)
+        ],
+    )
+
+
+def _history(filing: FilingRecord) -> FilingHistoryResponse:
+    versions = sorted(filing.versions, key=lambda item: (item.published_at, item.id))
+    reports = sorted(
+        (report for version in versions for report in version.reports),
+        key=lambda item: (item.reviewed_at, item.id),
+    )
+    return FilingHistoryResponse(
+        issuer=IssuerSummary.model_validate(filing.issuer),
+        filing=FilingSummary.model_validate(filing),
+        versions=[FilingVersionSummary.model_validate(item) for item in versions],
+        reports=[_summary(item) for item in reports],
     )
 
 
@@ -129,6 +172,34 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if record is None:
             raise HTTPException(status_code=404, detail="report not found")
         return _detail(record)
+
+    @app.get(
+        "/api/v1/reports/{report_id}/provenance",
+        response_model=ReportProvenance,
+        tags=["provenance"],
+    )
+    def report_provenance(
+        report_id: str,
+        session: Session = Depends(get_session),
+    ) -> ReportProvenance:
+        record = get_report(session, report_id)
+        if record is None:
+            raise HTTPException(status_code=404, detail="report not found")
+        return _provenance(record)
+
+    @app.get(
+        "/api/v1/filings/{filing_id}/history",
+        response_model=FilingHistoryResponse,
+        tags=["provenance"],
+    )
+    def filing_history(
+        filing_id: int,
+        session: Session = Depends(get_session),
+    ) -> FilingHistoryResponse:
+        filing = get_filing(session, filing_id)
+        if filing is None:
+            raise HTTPException(status_code=404, detail="filing not found")
+        return _history(filing)
 
     @app.get(
         "/api/v1/reports/{report_id}",

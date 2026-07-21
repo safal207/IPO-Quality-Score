@@ -1,6 +1,6 @@
-# IPO Quality Score Backend v0.2
+# IPO Quality Score Backend v0.3
 
-The backend exposes validated IPO research reports through a read-only HTTP API. It imports canonical `reports/**/report.json` artifacts, validates them against the repository schema and cross-field rules, and stores both indexed summary fields and the complete evidence-first report document.
+The backend exposes validated IPO research through a read-only HTTP API. It imports canonical `reports/**/report.json` artifacts, validates them, and stores both fast summary fields and the complete evidence-first report document.
 
 ## Why read-only first
 
@@ -17,20 +17,48 @@ The backend deliberately exposes no public write or admin endpoints. Report publ
 - Psycopg 3 PostgreSQL driver
 - JSON Schema plus deterministic cross-field validation
 
-## Data contract
+## Provenance graph
 
-The `ipo_reports` table stores:
+The database now preserves the research lineage explicitly:
 
-- report and methodology versions;
-- issuer, ticker, exchange, and filing date;
-- score, coverage, confidence, and status;
-- canonical SHA-256 content hash;
-- the complete evidence-first JSON report;
-- created and updated timestamps.
+```text
+issuer
+  -> filing
+      -> filing version
+          -> source snapshots
+          -> reports
+```
 
-Indexed columns support fast frontend lists and filters. The complete JSON preserves evidence, unknowns, contradictions, calculations, conflicts, and reviewer state.
+### `issuers`
 
-## Recommended local run: Docker Compose
+Stores the legal identity, country, industry, brand, and website once rather than copying them into every history row.
+
+### `filings`
+
+Represents one offering or filing stream for an issuer, exchange, ticker, and filing type.
+
+### `filing_versions`
+
+Stores every exact filing state with:
+
+- version label;
+- publication and access timestamps;
+- filing URL;
+- canonical content hash;
+- `supersedes_id` link;
+- one deterministic `is_current` version per filing.
+
+### `source_snapshots`
+
+Deduplicates source identities used by reports. Each snapshot stores the source type, title, URL, version, publication time, access time, and canonical hash.
+
+### `ipo_reports`
+
+Retains the complete report JSON and fast indexed fields. Each report now links to its exact filing version, source snapshots, prior report ID, and deterministic `is_latest` state.
+
+The older denormalized report fields remain available so frontend list and card queries stay simple while provenance is normalized behind them.
+
+## Recommended local run
 
 From the repository root:
 
@@ -52,7 +80,7 @@ Stop the stack:
 docker compose down
 ```
 
-Remove the local database volume as well:
+Remove the local database volume:
 
 ```bash
 docker compose down --volumes
@@ -60,12 +88,14 @@ docker compose down --volumes
 
 ## Manual development run
 
-Create and activate a virtual environment, then install dependencies:
-
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install --requirement backend/requirements-dev.txt
+export IQS_DATABASE_URL=postgresql+psycopg://ipo:ipo@localhost:5432/ipo_quality_score
+alembic -c backend/alembic.ini upgrade head
+python -m backend.cli import-reports
+uvicorn backend.app.main:app --reload
 ```
 
 Windows PowerShell activation:
@@ -74,22 +104,7 @@ Windows PowerShell activation:
 .venv\Scripts\Activate.ps1
 ```
 
-Set a database URL. PostgreSQL with Psycopg 3 uses:
-
-```text
-postgresql+psycopg://user:password@host:5432/database
-```
-
-Apply migrations before starting or importing:
-
-```bash
-export IQS_DATABASE_URL=postgresql+psycopg://ipo:ipo@localhost:5432/ipo_quality_score
-alembic -c backend/alembic.ini upgrade head
-python -m backend.cli import-reports
-uvicorn backend.app.main:app --reload
-```
-
-For an isolated SQLite experiment:
+For isolated SQLite experiments:
 
 ```bash
 export IQS_DATABASE_URL=sqlite:///./ipo_quality_score.db
@@ -102,31 +117,19 @@ uvicorn backend.app.main:app --reload
 
 ## Migration commands
 
-Apply all migrations:
-
 ```bash
 alembic -c backend/alembic.ini upgrade head
-```
-
-Show the current revision:
-
-```bash
 alembic -c backend/alembic.ini current
+alembic -c backend/alembic.ini downgrade -1
 ```
 
-Create a new revision after changing models:
+Create a reviewed migration after changing models:
 
 ```bash
 alembic -c backend/alembic.ini revision --autogenerate -m "describe change"
 ```
 
-Rollback one revision:
-
-```bash
-alembic -c backend/alembic.ini downgrade -1
-```
-
-Generated migrations must be reviewed before commit. Autogeneration proposes database operations; it does not establish business correctness.
+Autogeneration proposes database operations; it does not establish business correctness.
 
 ## Endpoints
 
@@ -136,13 +139,7 @@ Returns service version and imported report count.
 
 ### `GET /api/v1/reports`
 
-Query parameters:
-
-- `ticker`
-- `status`
-- `min_score`
-- `limit` from 1 to 100
-- `offset`
+Supports `ticker`, `status`, `min_score`, `limit`, and `offset`.
 
 ### `GET /api/v1/reports/{report_id}`
 
@@ -150,20 +147,28 @@ Returns indexed summary data plus the complete validated report document.
 
 ### `GET /api/v1/reports/by-ticker/{ticker}/latest`
 
-Returns the most recent filing-based report for a ticker.
+Returns the current report selected by the stored history state rather than merely assuming the newest filename is current.
 
-## Environment
+### `GET /api/v1/reports/{report_id}/provenance`
 
-Important variables:
+Returns the report together with its issuer, filing, exact filing version, and linked source snapshots.
 
-- `IQS_DATABASE_URL`
-- `IQS_REPORTS_ROOT`
-- `IQS_SCHEMA_PATH`
-- `IQS_AUTO_CREATE_SCHEMA`
-- `IQS_IMPORT_REPORTS_ON_STARTUP`
-- `IQS_CORS_ORIGINS`
+### `GET /api/v1/filings/{filing_id}/history`
 
-See `backend/.env.example`.
+Returns all filing versions and reports in chronological order, including `supersedes_id`, `is_current`, `supersedes_report_id`, and `is_latest`.
+
+## Import behavior
+
+Import remains idempotent by report ID and canonical report hash. It also backfills the normalized graph for already-known reports, so adding the history migration does not require changing the canonical JSON artifacts.
+
+When a new amendment is imported:
+
+1. the issuer and filing are reused;
+2. a new filing version is created;
+3. the previous version becomes non-current;
+4. `supersedes_id` points to the previous exact version;
+5. the new report becomes latest;
+6. previous report and source links remain queryable.
 
 ## Tests
 
@@ -171,7 +176,14 @@ See `backend/.env.example`.
 PYTHONPATH=. pytest backend/tests -q
 ```
 
-The default suite validates API behavior, idempotent import, and Alembic upgrade/downgrade on SQLite. GitHub Actions additionally starts PostgreSQL, applies migrations, imports the real ITG and Ethos reports, and calls the health endpoint.
+The suite verifies:
+
+- API behavior and idempotent import;
+- Alembic upgrade, downgrade, and ORM drift;
+- normalized issuer and filing creation;
+- source snapshot links;
+- amendment supersession chains;
+- SQLite and PostgreSQL integration.
 
 ## Current boundary
 
@@ -180,16 +192,15 @@ Included now:
 - validated and idempotent report import;
 - versioned Alembic schema;
 - PostgreSQL and SQLite support;
-- read-only API;
-- CORS configuration;
+- issuer, filing, filing-version, source-snapshot, and report history;
+- read-only provenance API;
 - Docker image and Compose stack;
 - SQLite and PostgreSQL CI.
 
 Next backend increments:
 
-1. issuer, filing, and amendment-history entities;
-2. source snapshot and supersession records;
-3. authentication, roles, and reviewer workflow;
-4. background filing ingestion and change detection;
-5. watchlists, alerts, subscriptions, and billing;
-6. cached comparison and chart endpoints for the frontend.
+1. immutable raw source content or object-storage references;
+2. authentication, reviewer roles, and audit events;
+3. background SEC filing ingestion and change detection;
+4. watchlists, alerts, subscriptions, and billing;
+5. cached comparison and chart endpoints for the frontend.

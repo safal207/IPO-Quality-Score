@@ -7,7 +7,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 DEFAULT_APP_NAME = "IPO Quality Score API"
-DEFAULT_APP_VERSION = "0.2.0"
+DEFAULT_APP_VERSION = "0.3.0"
 DEFAULT_DATABASE_URL = "sqlite:///./ipo_quality_score.db"
 DEFAULT_REPORTS_ROOT = PROJECT_ROOT / "reports"
 DEFAULT_SCHEMA_PATH = PROJECT_ROOT / "schema" / "ipo-report.schema.json"

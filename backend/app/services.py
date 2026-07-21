@@ -11,7 +11,13 @@ from jsonschema import Draft202012Validator, FormatChecker
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from backend.app.models import ReportRecord
+from backend.app.models import (
+    FilingRecord,
+    FilingVersionRecord,
+    IssuerRecord,
+    ReportRecord,
+    SourceSnapshotRecord,
+)
 from scripts.validate_reports import validate_cross_fields
 
 
@@ -35,9 +41,13 @@ def _parse_datetime(value: str) -> datetime:
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
 
 
-def _canonical_hash(document: dict[str, Any]) -> str:
+def _utc_sort(value: datetime) -> datetime:
+    return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+
+
+def _canonical_hash(value: Any) -> str:
     payload = json.dumps(
-        document,
+        value,
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,
@@ -60,6 +70,199 @@ def validate_report(document: dict[str, Any], schema_path: Path) -> None:
         raise ReportValidationError("; ".join(errors))
 
 
+def _get_or_create_issuer(
+    session: Session,
+    issuer_document: dict[str, Any],
+) -> IssuerRecord:
+    issuer = session.scalar(
+        select(IssuerRecord).where(
+            IssuerRecord.legal_name == issuer_document["legal_name"],
+            IssuerRecord.country == issuer_document["country"],
+        )
+    )
+    values = {
+        "brand_name": issuer_document.get("brand_name"),
+        "industry": issuer_document["industry"],
+        "website": issuer_document.get("website"),
+    }
+    if issuer is None:
+        issuer = IssuerRecord(
+            legal_name=issuer_document["legal_name"],
+            country=issuer_document["country"],
+            **values,
+        )
+        session.add(issuer)
+        session.flush()
+        return issuer
+
+    for field, value in values.items():
+        setattr(issuer, field, value)
+    return issuer
+
+
+def _filing_key(
+    issuer_document: dict[str, Any],
+    offering: dict[str, Any],
+) -> str:
+    return _canonical_hash(
+        {
+            "issuer": issuer_document["legal_name"],
+            "country": issuer_document["country"],
+            "filing_type": offering["filing_type"],
+            "exchange": offering["exchange"],
+            "ticker": (offering.get("ticker") or "").upper() or None,
+        }
+    )
+
+
+def _get_or_create_filing(
+    session: Session,
+    issuer: IssuerRecord,
+    issuer_document: dict[str, Any],
+    offering: dict[str, Any],
+) -> FilingRecord:
+    filing_key = _filing_key(issuer_document, offering)
+    filing = session.scalar(
+        select(FilingRecord).where(FilingRecord.filing_key == filing_key)
+    )
+    values = {
+        "filing_type": offering["filing_type"],
+        "exchange": offering["exchange"],
+        "ticker": (offering.get("ticker") or "").upper() or None,
+    }
+    if filing is None:
+        filing = FilingRecord(
+            issuer_id=issuer.id,
+            filing_key=filing_key,
+            **values,
+        )
+        session.add(filing)
+        session.flush()
+        return filing
+
+    for field, value in values.items():
+        setattr(filing, field, value)
+    return filing
+
+
+def _sync_filing_version_history(
+    session: Session,
+    filing_id: int,
+) -> None:
+    versions = list(
+        session.scalars(
+            select(FilingVersionRecord)
+            .where(FilingVersionRecord.filing_id == filing_id)
+            .order_by(FilingVersionRecord.published_at, FilingVersionRecord.id)
+        )
+    )
+    versions.sort(key=lambda item: (_utc_sort(item.published_at), item.id))
+    previous: FilingVersionRecord | None = None
+    for index, version in enumerate(versions):
+        version.supersedes_id = previous.id if previous is not None else None
+        version.is_current = index == len(versions) - 1
+        previous = version
+
+
+def _get_or_create_filing_version(
+    session: Session,
+    filing: FilingRecord,
+    offering: dict[str, Any],
+) -> FilingVersionRecord:
+    source_hash = _canonical_hash(offering)
+    version = session.scalar(
+        select(FilingVersionRecord).where(
+            FilingVersionRecord.filing_id == filing.id,
+            FilingVersionRecord.source_hash == source_hash,
+        )
+    )
+    values = {
+        "version_label": offering["filing_version"],
+        "published_at": _parse_datetime(offering["filing_published_at"]),
+        "source_accessed_at": _parse_datetime(offering["source_accessed_at"]),
+        "source_url": offering["filing_url"],
+    }
+    if version is None:
+        version = FilingVersionRecord(
+            filing_id=filing.id,
+            source_hash=source_hash,
+            **values,
+        )
+        session.add(version)
+        session.flush()
+    else:
+        for field, value in values.items():
+            setattr(version, field, value)
+
+    _sync_filing_version_history(session, filing.id)
+    session.flush()
+    return version
+
+
+def _source_identity(evidence: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "source_type": evidence["source_type"],
+        "source_title": evidence["source_title"],
+        "source_url": evidence["source_url"],
+        "source_version": evidence.get("source_version"),
+        "published_at": evidence["published_at"],
+    }
+
+
+def _get_or_create_source_snapshots(
+    session: Session,
+    filing_version: FilingVersionRecord,
+    evidence_items: list[dict[str, Any]],
+) -> list[SourceSnapshotRecord]:
+    snapshots: list[SourceSnapshotRecord] = []
+    seen_hashes: set[str] = set()
+
+    for evidence in evidence_items:
+        identity = _source_identity(evidence)
+        content_hash = _canonical_hash(identity)
+        if content_hash in seen_hashes:
+            continue
+        seen_hashes.add(content_hash)
+
+        snapshot = session.scalar(
+            select(SourceSnapshotRecord).where(
+                SourceSnapshotRecord.filing_version_id == filing_version.id,
+                SourceSnapshotRecord.content_hash == content_hash,
+            )
+        )
+        if snapshot is None:
+            snapshot = SourceSnapshotRecord(
+                filing_version_id=filing_version.id,
+                source_type=evidence["source_type"],
+                source_title=evidence["source_title"],
+                source_url=evidence["source_url"],
+                source_version=evidence.get("source_version"),
+                published_at=_parse_datetime(evidence["published_at"]),
+                accessed_at=_parse_datetime(evidence["accessed_at"]),
+                content_hash=content_hash,
+                snapshot_document=identity,
+            )
+            session.add(snapshot)
+            session.flush()
+        snapshots.append(snapshot)
+
+    return snapshots
+
+
+def _sync_latest_reports(session: Session, filing_id: int) -> None:
+    reports = list(
+        session.scalars(
+            select(ReportRecord)
+            .join(FilingVersionRecord)
+            .where(FilingVersionRecord.filing_id == filing_id)
+            .order_by(ReportRecord.reviewed_at, ReportRecord.id)
+        )
+    )
+    reports.sort(key=lambda item: (_utc_sort(item.reviewed_at), item.id))
+    for index, report in enumerate(reports):
+        report.is_latest = index == len(reports) - 1
+
+
 def upsert_report(
     session: Session,
     document: dict[str, Any],
@@ -71,24 +274,38 @@ def upsert_report(
     record = session.scalar(
         select(ReportRecord).where(ReportRecord.report_id == report_id)
     )
-
-    if record is not None and record.source_hash == source_hash:
-        return "unchanged"
+    unchanged = record is not None and record.source_hash == source_hash
 
     offering = document["offering_state"]
     summary = document["score_summary"]
     review = document["review"]
-    issuer = document["issuer"]
+    issuer_document = document["issuer"]
+
+    issuer = _get_or_create_issuer(session, issuer_document)
+    filing = _get_or_create_filing(
+        session,
+        issuer,
+        issuer_document,
+        offering,
+    )
+    filing_version = _get_or_create_filing_version(session, filing, offering)
+    snapshots = _get_or_create_source_snapshots(
+        session,
+        filing_version,
+        document["evidence"],
+    )
 
     values = {
         "report_version": document["report_version"],
         "methodology_version": document["methodology_version"],
         "status": document["status"],
-        "issuer_name": issuer["legal_name"],
+        "issuer_name": issuer_document["legal_name"],
         "ticker": (offering.get("ticker") or "").upper() or None,
         "exchange": offering["exchange"],
         "filing_url": offering["filing_url"],
         "filing_published_at": _parse_datetime(offering["filing_published_at"]),
+        "filing_version_id": filing_version.id,
+        "supersedes_report_id": document.get("supersedes_report_id"),
         "reviewed_at": _parse_datetime(review["reviewed_at"]),
         "normalized_score": float(summary["normalized_score"]),
         "coverage_percent": float(summary["coverage_percent"]),
@@ -98,12 +315,19 @@ def upsert_report(
     }
 
     if record is None:
-        session.add(ReportRecord(report_id=report_id, **values))
-        return "created"
+        record = ReportRecord(report_id=report_id, **values)
+        session.add(record)
+        session.flush()
+        result = "created"
+    else:
+        for field, value in values.items():
+            setattr(record, field, value)
+        result = "unchanged" if unchanged else "updated"
 
-    for field, value in values.items():
-        setattr(record, field, value)
-    return "updated"
+    record.source_snapshots = snapshots
+    session.flush()
+    _sync_latest_reports(session, filing.id)
+    return result
 
 
 def import_reports(
@@ -161,7 +385,14 @@ def get_report(session: Session, report_id: str) -> ReportRecord | None:
 def get_latest_report(session: Session, ticker: str) -> ReportRecord | None:
     return session.scalar(
         select(ReportRecord)
-        .where(ReportRecord.ticker == ticker.upper())
+        .where(
+            ReportRecord.ticker == ticker.upper(),
+            ReportRecord.is_latest.is_(True),
+        )
         .order_by(ReportRecord.filing_published_at.desc())
         .limit(1)
     )
+
+
+def get_filing(session: Session, filing_id: int) -> FilingRecord | None:
+    return session.get(FilingRecord, filing_id)
