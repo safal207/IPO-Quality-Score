@@ -13,51 +13,37 @@ on:
       - ".github/workflows/frontend.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out pull request branch
+      - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
           node-version: "22.12.0"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Install and lock frontend test dependencies
+      - name: Install locked frontend dependencies
         working-directory: frontend
-        run: >-
-          npm install --save-dev --save-exact --no-audit --no-fund
-          @playwright/test
-          @testing-library/jest-dom
-          @testing-library/react
-          @testing-library/user-event
-          jsdom
-          vitest
-
-      - name: Commit locked test dependencies
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add frontend/package.json frontend/package-lock.json
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: lock frontend test dependencies"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
+        run: npm ci --no-audit --no-fund
 
       - name: Verify TypeScript 7
         working-directory: frontend
         run: npx tsc --version | grep '^Version 7\.'
 
-      - name: Run component and contract tests
+      - name: Run runtime contract tests
         working-directory: frontend
-        run: npm test
+        run: npx vitest run src/contracts.test.ts --reporter=verbose
+
+      - name: Run component state tests
+        working-directory: frontend
+        run: npx vitest run src/App.test.tsx --reporter=verbose
 
       - name: Type-check and build
         working-directory: frontend
