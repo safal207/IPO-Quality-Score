@@ -1,9 +1,26 @@
 import { expect, test } from "@playwright/test";
 import {
   detailsById,
+  ethosSummary,
+  itgSummary,
   provenanceById,
   reportsResponse,
 } from "../src/test/fixtures";
+
+const historiesById = {
+  "1": {
+    issuer: provenanceById[ethosSummary.report_id]?.issuer,
+    filing: provenanceById[ethosSummary.report_id]?.filing,
+    versions: [provenanceById[ethosSummary.report_id]?.filing_version],
+    reports: [ethosSummary],
+  },
+  "2": {
+    issuer: provenanceById[itgSummary.report_id]?.issuer,
+    filing: provenanceById[itgSummary.report_id]?.filing,
+    versions: [provenanceById[itgSummary.report_id]?.filing_version],
+    reports: [itgSummary],
+  },
+};
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/v1/**", async (route) => {
@@ -12,6 +29,15 @@ test.beforeEach(async ({ page }) => {
     if (url.pathname === "/api/v1/reports") {
       await route.fulfill({ json: reportsResponse });
       return;
+    }
+
+    const historyMatch = url.pathname.match(/^\/api\/v1\/filings\/(\d+)\/history$/);
+    if (historyMatch) {
+      const payload = historiesById[historyMatch[1] as keyof typeof historiesById];
+      if (payload) {
+        await route.fulfill({ json: payload });
+        return;
+      }
     }
 
     const provenanceMatch = url.pathname.match(/^\/api\/v1\/reports\/(.+)\/provenance$/);
@@ -38,7 +64,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test("loads reports, keeps search selection consistent, and exposes audited evidence", async ({ page }) => {
+test("loads reports, keeps selection consistent, and completes the interest loop", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "See the IPO beneath the pitch." })).toBeVisible();
@@ -53,9 +79,15 @@ test("loads reports, keeps search selection consistent, and exposes audited evid
     page.getByRole("heading", { name: "ITG Incorporated", exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: /Ethos Technologies Inc\./ })).toHaveCount(0);
-  await expect(page.getByText("Final prospectus", { exact: true })).toBeVisible();
+  await expect(page.getByText("Final prospectus", { exact: true }).first()).toBeVisible();
 
   const sourceLink = page.getByRole("link", { name: "Open source ↗" });
   await expect(sourceLink).toHaveAttribute("href", "https://www.sec.gov/example");
   await expect(sourceLink).toHaveAttribute("rel", /noopener/);
+
+  await expect(page.getByRole("heading", { name: "Follow the idea through time." })).toBeVisible();
+  await page.getByText("Inspect 424B4 history").click();
+  await expect(page.getByRole("link", { name: "Open filing ↗" })).toBeVisible();
+  await expect(page.getByRole("table", { name: "IPO comparison" })).toBeVisible();
+  await expect(page.getByText(/Stored only in this browser tab/i)).toBeVisible();
 });
