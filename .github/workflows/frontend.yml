@@ -41,11 +41,11 @@ jobs:
 
       - name: Run runtime contract tests
         working-directory: frontend
-        run: npx vitest run src/contracts.test.ts --reporter=verbose
+        run: npx vitest run src/contracts.test.ts src/history-contract.test.ts --reporter=verbose
 
       - name: Run component state tests
         working-directory: frontend
-        run: npx vitest run src/App.test.tsx --reporter=verbose
+        run: npx vitest run src/App.test.tsx src/interest-loop.test.tsx --reporter=verbose
 
       - name: Type-check and build
         working-directory: frontend
