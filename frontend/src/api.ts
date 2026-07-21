@@ -4,7 +4,9 @@ import {
   parseReportListResponse,
   parseReportProvenance,
 } from "./contracts";
+import { parseFilingHistory } from "./history-contract";
 import type {
+  FilingHistoryResponse,
   ReportDetail,
   ReportListResponse,
   ReportProvenance,
@@ -119,6 +121,17 @@ export function getReportProvenance(
   return fetchJson(
     `/api/v1/reports/${encodeURIComponent(reportId)}/provenance`,
     parseReportProvenance,
+    signal,
+  );
+}
+
+export function getFilingHistory(
+  filingId: number,
+  signal?: AbortSignal,
+): Promise<FilingHistoryResponse> {
+  return fetchJson(
+    `/api/v1/filings/${encodeURIComponent(String(filingId))}/history`,
+    parseFilingHistory,
     signal,
   );
 }
