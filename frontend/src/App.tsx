@@ -83,10 +83,12 @@ function DetailPanel({
   detail,
   provenance,
   loading,
+  error,
 }: {
   detail: ReportDetail | null;
   provenance: ReportProvenance | null;
   loading: boolean;
+  error: string | null;
 }) {
   if (loading) {
     return (
@@ -94,6 +96,16 @@ function DetailPanel({
         <div className="spinner" />
         <h2>Loading evidence graph</h2>
         <p>Fetching the complete report and its exact filing provenance.</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="detail-panel detail-panel--empty" role="alert">
+        <div className="empty-symbol">!</div>
+        <h2>Report detail unavailable</h2>
+        <p>{error}</p>
       </section>
     );
   }
@@ -108,6 +120,11 @@ function DetailPanel({
   const positives = document.positive_signals ?? [];
   const unknowns = document.unknowns ?? [];
   const evidence = document.evidence ?? [];
+  const filingState = provenance
+    ? provenance.filing_version.is_current
+      ? "current"
+      : "superseded"
+    : "unavailable";
 
   return (
     <section className="detail-panel">
@@ -156,10 +173,8 @@ function DetailPanel({
         </article>
         <article className="metric-card">
           <span>Filing state</span>
-          <strong className="metric-card__text">
-            {provenance?.filing_version.is_current ? "current" : "superseded"}
-          </strong>
-          <small>{provenance?.filing_version.version_label ?? "Loading provenance"}</small>
+          <strong className="metric-card__text">{filingState}</strong>
+          <small>{provenance?.filing_version.version_label ?? "Provenance unavailable"}</small>
         </article>
       </div>
 
@@ -252,7 +267,7 @@ function DetailPanel({
               <p>{item.extracted_fact}</p>
               <div className="evidence-item__footer">
                 <span>{item.location ?? item.source_type}</span>
-                <a href={item.source_url} target="_blank" rel="noreferrer">
+                <a href={item.source_url} target="_blank" rel="noopener noreferrer">
                   Open source ↗
                 </a>
               </div>
@@ -289,22 +304,17 @@ export default function App() {
   const [minScore, setMinScore] = useState(0);
   const [listLoading, setListLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
     setListLoading(true);
-    setError(null);
+    setListError(null);
 
     void getReports({ minScore, limit: 100 }, controller.signal)
       .then((response) => {
         setReports(response.items);
-        setSelectedId((current) => {
-          if (current && response.items.some((item) => item.report_id === current)) {
-            return current;
-          }
-          return response.items[0]?.report_id ?? null;
-        });
       })
       .catch((reason: unknown) => {
         if (controller.signal.aborted) {
@@ -312,7 +322,7 @@ export default function App() {
         }
         setReports([]);
         setSelectedId(null);
-        setError(reason instanceof Error ? reason.message : "Unable to load IPO reports");
+        setListError(reason instanceof Error ? reason.message : "Unable to load IPO reports");
       })
       .finally(() => {
         if (!controller.signal.aborted) {
@@ -323,16 +333,44 @@ export default function App() {
     return () => controller.abort();
   }, [minScore]);
 
+  const visibleReports = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) {
+      return reports;
+    }
+    return reports.filter((report) =>
+      `${report.issuer_name} ${report.ticker ?? ""} ${report.exchange}`
+        .toLowerCase()
+        .includes(needle),
+    );
+  }, [reports, search]);
+
+  useEffect(() => {
+    if (listLoading) {
+      return;
+    }
+    setSelectedId((current) => {
+      if (current && visibleReports.some((item) => item.report_id === current)) {
+        return current;
+      }
+      return visibleReports[0]?.report_id ?? null;
+    });
+  }, [listLoading, visibleReports]);
+
   useEffect(() => {
     if (!selectedId) {
       setDetail(null);
       setProvenance(null);
+      setDetailError(null);
+      setDetailLoading(false);
       return;
     }
 
     const controller = new AbortController();
+    setDetail(null);
+    setProvenance(null);
     setDetailLoading(true);
-    setError(null);
+    setDetailError(null);
 
     void Promise.all([
       getReport(selectedId, controller.signal),
@@ -348,7 +386,7 @@ export default function App() {
         }
         setDetail(null);
         setProvenance(null);
-        setError(reason instanceof Error ? reason.message : "Unable to load report detail");
+        setDetailError(reason instanceof Error ? reason.message : "Unable to load report detail");
       })
       .finally(() => {
         if (!controller.signal.aborted) {
@@ -358,18 +396,6 @@ export default function App() {
 
     return () => controller.abort();
   }, [selectedId]);
-
-  const visibleReports = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    if (!needle) {
-      return reports;
-    }
-    return reports.filter((report) =>
-      `${report.issuer_name} ${report.ticker ?? ""} ${report.exchange}`
-        .toLowerCase()
-        .includes(needle),
-    );
-  }, [reports, search]);
 
   const averageScore =
     reports.length > 0
@@ -456,10 +482,10 @@ export default function App() {
               />
             </label>
 
-            {error ? (
+            {listError ? (
               <div className="error-banner" role="alert">
-                <strong>Backend unavailable</strong>
-                <span>{error}</span>
+                <strong>Report list unavailable</strong>
+                <span>{listError}</span>
               </div>
             ) : null}
 
@@ -487,7 +513,12 @@ export default function App() {
             </div>
           </aside>
 
-          <DetailPanel detail={detail} provenance={provenance} loading={detailLoading} />
+          <DetailPanel
+            detail={detail}
+            provenance={provenance}
+            loading={detailLoading}
+            error={detailError}
+          />
         </section>
 
         <section className="methodology-strip" id="methodology">
