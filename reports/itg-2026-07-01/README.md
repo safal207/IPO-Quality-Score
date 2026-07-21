@@ -1,120 +1,115 @@
-# ITG, Inc. IPO Quality Score — Draft
+# ITG, Inc. IPO Quality Score — Draft v0.2
 
-> **Status:** Draft, not publication-ready  
 > **Methodology:** v0.1  
-> **Offering state:** Final prospectus dated June 30, 2026 and filed July 1, 2026  
+> **Offering state:** final prospectus dated June 30, 2026, filed July 1, 2026  
 > **Primary source:** [SEC Form 424B4](https://www.sec.gov/Archives/edgar/data/2110117/000119312526292853/d103576d424b4.htm)  
-> **AI-assisted review date:** July 21, 2026
+> **Status:** research draft; human review required
 
 ## Result
 
 | Metric | Result |
 |---|---:|
-| Earned points | 48 |
-| Applicable maximum | 80 |
-| Normalized score | **60/100** |
-| Evidence coverage | **80%** |
+| Earned points | 55 |
+| Applicable maximum | 100 |
+| Normalized score | **55/100** |
+| Evidence coverage | **100%** |
 | Overall confidence | Medium |
-| Interpretation | Material strengths with meaningful risks |
+| Interpretation | Speculative or evidence-limited |
 
-The valuation and legal/regulatory dimensions remain `unknown`. This score therefore must not be presented without its 80% coverage and medium-confidence label.
+Coverage means all ten dimensions now have evidence and a judgment. It does not mean the report is publication-ready.
 
-## Offering snapshot
+## Offering and valuation snapshot
 
 | Field | Value |
-|---|---|
-| Exchange | Nasdaq Global Select Market |
-| Ticker | ITG |
+|---|---:|
 | IPO price | $16.00 |
-| Base shares offered | 19,512,196 Class A shares |
-| Base secondary shares | None identified in the final prospectus |
-| Expected net proceeds | Approximately $279.2 million |
-| Primary use | Repay revolver and term-loan debt |
+| Base shares offered | 19,512,196 |
+| Exchange-adjusted economic units | 121,230,390 |
+| Implied equity value | $1.940bn |
+| Implied enterprise value | $2.466bn |
+| EV / 2025 revenue | 2.14x |
+| EV / 2025 Adjusted EBITDA | 16.63x |
+| Pro forma net debt | $526.5m |
+| Net debt / 2025 Adjusted EBITDA | 3.55x |
 
-## Core investment-research tension
+See [`calculations.md`](calculations.md) for the reproducible arithmetic and assumptions.
 
-ITG combines attractive digital-infrastructure demand and meaningful recurring contractual coverage with weakening GAAP profitability, substantial remaining leverage, and a controlled-company structure.
+## Central finding
 
-That tension is exactly why the score separates business quality, offering quality, governance, coverage, and confidence rather than producing one unexplained number.
+ITG has attractive infrastructure demand, revenue growth, and multi-year contract coverage. The offering is nevertheless structurally demanding because GAAP profitability weakened, most proceeds repay debt, leverage remains material, previous owners retain control, and future-sale and incentive-plan overhangs are large.
 
-## Positive signals
+## Material correction from v0.1
 
-### Revenue growth and contract visibility
+The earlier draft treated **62.45%** as the continuing-owner control level. That percentage describes only the Class B/direct LLC-interest slice excluding Oaktree Blocked Fund's Class A position.
 
-Revenue increased from $997.996 million in 2024 to $1,154.857 million in 2025, growth of approximately **15.7%**. The filing says multi-year master service agreements represented approximately 92% of 2025 revenue, while engineering and maintenance represented about 59%.
+The final prospectus states that Continuing Equity Owners retain **83.90% of combined voting power and economic interests** after the base offering. IPO purchasers hold 16.10%.
 
-The score remains below the maximum because $64.8 million of 2025 revenue came from acquired businesses and customers generally do not guarantee specific work volumes.
+## Key positives
 
-### Primary capital rather than base secondary selling
+- Revenue increased from $997.996m in 2024 to $1,154.857m in 2025, approximately 15.7%.
+- Multi-year MSAs represented about 92% of 2025 revenue.
+- The base offering is primary rather than an existing-holder secondary sale.
+- Pro forma debt reduction is clearly quantified.
+- The issuer does not expect ordinary-course legal proceedings to have a material adverse effect.
 
-The base IPO shares were issued by ITG. That is more aligned than an offering dominated by existing-holder liquidity because proceeds remain inside the corporate structure and reduce financial risk.
+## Key risks
 
-### Measurable debt reduction
+### Profitability and cash conversion
 
-Term-loan and revolver balances totaled approximately $718.875 million at March 31, 2026. The prospectus shows pro forma post-offering balances of approximately $439.875 million, an expected reduction of about **$279.0 million**, or **38.8%**.
+Net income fell from $28.280m to $6.214m, and Q1 2026 produced a $13.158m loss. Company-defined 2025 Free Cash Flow was $91.093m, while GAAP operating cash flow was $12.3m.
 
-## Red flags
+### Valuation
 
-### Profitability weakened materially
+The filing-derived enterprise value is about $2.466bn, equal to 2.14x revenue and 16.63x company-defined Adjusted EBITDA. No independent peer set is included, so valuation receives 6/15 with medium confidence.
 
-Net income fell from $28.280 million in 2024 to $6.214 million in 2025, a decline of approximately **78.0%**. ITG then reported a $13.158 million net loss for the first quarter of 2026, compared with $1.578 million of net income one year earlier.
+### Debt and proceeds
 
-The company reported 2025 “Free Cash Flow” of $91.093 million, but defines it as Adjusted EBITDA minus capital expenditures. GAAP operating cash flow was only $12.3 million. The difference is visible in the evidence register rather than being silently blended into one favorable cash-flow claim.
+Most expected net proceeds repay borrowings. Pro forma net debt remains about $526.5m, or 3.55x 2025 Adjusted EBITDA.
 
-### Most proceeds repair the balance sheet
+### Control and governance
 
-The IPO improves resilience, but approximately all expected net proceeds are assigned to paying down existing borrowings. This means new shareholders are primarily financing deleveraging rather than a clearly quantified expansion program.
+Continuing owners retain 83.90% control. Oaktree may nominate six directors while its group holds at least 40% of voting power. Governance receives 1/5.
 
-### Public investors begin without control
+### Lock-up and dilution
 
-Continuing owners retained approximately 62.45% of combined voting power after the offering. ITG qualifies as a controlled company, and Oaktree receives extensive director nomination rights that decline gradually with ownership.
+- 180-day lock-up, subject to exceptions and possible early release;
+- 101,718,194 continuing-owner shares or exchangeable units may later become sale-eligible;
+- initial incentive-plan reserve: 12,123,039 shares, about 10.0% of economic units;
+- annual reserve increase may be as high as 5%, subject to board determination;
+- the filing reports $18.26 of immediate tangible-book dilution per IPO share because pro forma tangible book value is negative.
 
-The Up-C structure also includes a Tax Receivable Agreement under which participants are expected to receive 85% of certain realized tax benefits. These arrangements may be valid and common in sponsor-backed IPOs, but they increase governance and cash-flow complexity for public holders.
+### Up-C and TRA
 
-## Dimension scorecard
+TRA participants are expected to receive 85% of certain realized tax benefits. The prospectus says payments may be substantial, unavailable for reinvestment, and may continue for more than fifteen years after all exchanges.
 
-| Dimension | Score | Status | Confidence |
-|---|---:|---|---|
-| Revenue growth and durability | 12/15 | Scored | High |
-| Profitability and cash flow | 7/15 | Scored | Medium |
-| Market and competitive position | 7/10 | Scored | Medium |
-| Valuation quality | —/15 | Unknown | Low |
-| Debt and balance-sheet resilience | 5/10 | Scored | High |
-| Use of proceeds | 6/10 | Scored | High |
-| Insider selling, lock-up, and dilution | 5/10 | Scored | Medium |
-| Governance and shareholder rights | 2/5 | Scored | High |
-| Legal and regulatory risk | —/5 | Unknown | Low |
-| Disclosure quality and consistency | 4/5 | Scored | Medium |
+### Legal and regulatory exposure
 
-## Why this is not publication-ready
+The filing does not identify material ordinary-course litigation, but the business faces meaningful OSHA, subcontractor, employment, workers' compensation, government-funding, privacy, permitting, and project-compliance exposure. This dimension receives 3/5 with medium confidence.
 
-The draft still requires:
+## Scorecard
 
-- a reproducible fully diluted economic share count;
-- enterprise-value and peer-multiple calculations;
-- a dedicated legal, litigation, labor, safety, and regulatory review;
-- verification of lock-up terms, incentive-plan overhang, and future LLC-interest exchanges;
-- reviewer conflict-of-interest confirmation;
-- independent human review of every extracted claim.
+| Dimension | Score |
+|---|---:|
+| Revenue growth and durability | 12/15 |
+| Profitability and cash flow | 7/15 |
+| Market and competitive position | 7/10 |
+| Valuation quality | 6/15 |
+| Debt and balance-sheet resilience | 5/10 |
+| Use of proceeds | 6/10 |
+| Insider selling, lock-up, and dilution | 4/10 |
+| Governance and shareholder rights | 1/5 |
+| Legal and regulatory risk | 3/5 |
+| Disclosure quality and consistency | 4/5 |
+| **Total** | **55/100** |
 
-## Product lesson
+## Remaining publication blockers
 
-The first real report demonstrates the service proposition:
-
-```text
-Headline: revenue grew 15.7%
-                    ↓
-Evidence layer: part of growth came from acquisitions
-                    ↓
-Cash layer: adjusted FCF looks strong, operating cash flow is much lower
-                    ↓
-Offering layer: most new capital repays debt
-                    ↓
-Governance layer: previous owners retain voting control
-                    ↓
-Conclusion: interesting operating business, but offering and governance risk remain material
-```
+- independent peer-company benchmark;
+- independent human verification of claims and calculations;
+- conflict-of-interest confirmation;
+- external litigation and regulatory database review;
+- monitoring of actual awards, LLC exchanges, TRA payments, and post-lock-up sales.
 
 ## Disclaimer
 
-This draft is provided for general informational and educational purposes. It does not consider any reader's financial situation, objectives, or risk tolerance and is not a personalized recommendation to buy, sell, subscribe to, or hold ITG securities. IPOs involve substantial risk, including loss of capital. Scores describe disclosed business, valuation, governance, dilution, legal, and evidence-quality factors and do not predict investment returns.
+This is general educational research, not personalized financial, legal, or tax advice. The score describes disclosed quality and risk factors and does not predict returns.
