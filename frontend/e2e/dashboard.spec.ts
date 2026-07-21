@@ -42,12 +42,16 @@ test("loads reports, keeps search selection consistent, and exposes audited evid
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "See the IPO beneath the pitch." })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Ethos Technologies Inc." })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Ethos Technologies Inc.", exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("61", { exact: true }).first()).toBeVisible();
 
   await page.getByRole("searchbox", { name: "Search issuer or ticker" }).fill("ITG");
 
-  await expect(page.getByRole("heading", { name: "ITG Incorporated" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "ITG Incorporated", exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: /Ethos Technologies Inc\./ })).toHaveCount(0);
   await expect(page.getByText("Final prospectus", { exact: true })).toBeVisible();
 
