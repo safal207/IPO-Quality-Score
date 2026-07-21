@@ -13,30 +13,60 @@ on:
       - ".github/workflows/frontend.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
+      - name: Check out pull request branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
           node-version: "22.12.0"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
 
-      - name: Install locked frontend dependencies
+      - name: Install and lock frontend test dependencies
         working-directory: frontend
-        run: npm ci --no-audit --no-fund
+        run: >-
+          npm install --save-dev --save-exact --no-audit --no-fund
+          @playwright/test
+          @testing-library/jest-dom
+          @testing-library/react
+          @testing-library/user-event
+          jsdom
+          vitest
+
+      - name: Commit locked test dependencies
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/package.json frontend/package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: lock frontend test dependencies"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
 
       - name: Verify TypeScript 7
         working-directory: frontend
         run: npx tsc --version | grep '^Version 7\.'
 
+      - name: Run component and contract tests
+        working-directory: frontend
+        run: npm test
+
       - name: Type-check and build
         working-directory: frontend
         run: npm run build
+
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser smoke test
+        working-directory: frontend
+        run: npm run test:e2e
