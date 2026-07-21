@@ -42,67 +42,13 @@ jobs:
       - name: Install backend dependencies
         run: python -m pip install --quiet --requirement backend/requirements-dev.txt
 
-      - name: Diagnose module import
-        run: python -c "from backend.app.main import create_app; print('module-import-ok')"
-
-      - name: Diagnose explicit settings
-        run: python -c "from backend.app.config import Settings; print(Settings(database_url='sqlite:///./diagnostic.db', auto_create_schema=True))"
-
-      - name: Diagnose application lifespan
-        run: |
-          python - <<'PY'
-          from fastapi.testclient import TestClient
-          from backend.app.config import PROJECT_ROOT, Settings
-          from backend.app.main import create_app
-
-          settings = Settings(
-              database_url="sqlite:///./diagnostic.db",
-              reports_root=PROJECT_ROOT / "reports",
-              schema_path=PROJECT_ROOT / "schema" / "ipo-report.schema.json",
-              auto_create_schema=True,
-              import_reports_on_startup=True,
-          )
-          with TestClient(create_app(settings)):
-              print("lifespan-ok")
-          PY
-
-      - name: Diagnose health request
-        run: |
-          python - <<'PY'
-          from fastapi.testclient import TestClient
-          from backend.app.config import PROJECT_ROOT, Settings
-          from backend.app.main import create_app
-
-          settings = Settings(
-              database_url="sqlite:///./diagnostic-health.db",
-              reports_root=PROJECT_ROOT / "reports",
-              schema_path=PROJECT_ROOT / "schema" / "ipo-report.schema.json",
-              auto_create_schema=True,
-              import_reports_on_startup=True,
-          )
-          with TestClient(create_app(settings)) as client:
-              response = client.get("/health")
-              response.raise_for_status()
-              print(response.json())
-          PY
-
-      - name: API health test on SQLite
-        run: pytest backend/tests/test_backend.py::test_health_reports_imported -vv --tb=short
-
-      - name: API list-filter test on SQLite
-        run: pytest backend/tests/test_backend.py::test_list_reports_and_filter -q
-
-      - name: API latest-report test on SQLite
-        run: pytest backend/tests/test_backend.py::test_latest_report_by_ticker -q
-
-      - name: API not-found test on SQLite
-        run: pytest backend/tests/test_backend.py::test_report_not_found -q
-
-      - name: API idempotent-import test on SQLite
-        run: pytest backend/tests/test_backend.py::test_import_is_idempotent -q
-
-      - name: Run migration and schema-drift tests on SQLite
-        run: pytest backend/tests/test_migrations.py -q
+      - name: Run unit, API, and SQLite migration tests
+        run: >-
+          pytest
+          backend/tests/test_config.py
+          backend/tests/test_backend.py
+          backend/tests/test_migrations.py
+          -q
 
   postgres:
     needs: unit
