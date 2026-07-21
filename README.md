@@ -2,13 +2,13 @@
 
 **IPO Quality Score is an evidence-first framework for evaluating IPO quality, business strength, valuation risk, governance, dilution, and disclosure integrity.**
 
-The project is designed to turn large and complex IPO disclosures into transparent, reviewable research artifacts. It does **not** predict short-term price performance and it does **not** replace professional financial, legal, or tax advice.
+The project turns complex offering documents into transparent, reviewable research artifacts. It does **not** predict short-term price performance and it does **not** replace professional financial, legal, or tax advice.
 
 ## Why this project exists
 
-IPO research is often fragmented across regulatory filings, investor presentations, market data, media coverage, and management claims. A single headline or growth chart can hide material risks.
+IPO research is fragmented across regulatory filings, financial statements, market data, investor materials, and management claims. A growth headline can hide weak cash conversion, debt repair, insider control, dilution, or inconsistent evidence.
 
-IPO Quality Score provides a repeatable structure for answering five questions:
+IPO Quality Score asks five questions:
 
 1. Is the underlying business economically strong?
 2. Is the offered valuation supported by evidence?
@@ -18,13 +18,13 @@ IPO Quality Score provides a repeatable structure for answering five questions:
 
 ## Core principles
 
-- **Evidence before score.** Every scored claim must link to a source and an extracted fact.
-- **Facts and judgment stay separate.** Source facts, calculations, assumptions, and analyst conclusions are recorded independently.
-- **Unknown is not zero.** Missing evidence is marked as `unknown` or `not_applicable`; it is never silently converted into a negative fact.
-- **Exact source state matters.** Reports should identify the filing version, publication date, and access date used.
-- **Conflicts are visible.** Contradictory disclosures or metrics are preserved and escalated for review.
-- **No guaranteed outcomes.** A high quality score is not a promise of investment return.
-- **Human-reviewable AI.** Automation may extract and organize evidence, but final publication requires review.
+- **Evidence before score.** Every scored claim links to a source and extracted fact.
+- **Facts and judgment stay separate.** Facts, calculations, assumptions, and conclusions are independently visible.
+- **Unknown is not zero.** Missing evidence is explicit rather than silently scored.
+- **Exact source state matters.** Filing version, publication date, and access date are recorded.
+- **Conflicts are visible.** Contradictory values remain reviewable.
+- **No guaranteed outcomes.** A score is not a promise of return.
+- **Human-reviewable AI.** Automation can assist extraction; humans retain publication authority.
 
 ## Score v0.1
 
@@ -42,13 +42,11 @@ IPO Quality Score provides a repeatable structure for answering five questions:
 | Disclosure quality and consistency | 5 |
 | **Total** | **100** |
 
-The normalized score is calculated only from applicable dimensions:
-
 ```text
 normalized_score = earned_points / applicable_max_points * 100
 ```
 
-`not_applicable` dimensions do not reduce the score. `unknown` dimensions remain visible and reduce confidence in the result.
+The report always publishes score, evidence coverage, and confidence separately.
 
 ## Interpretation bands
 
@@ -59,42 +57,47 @@ normalized_score = earned_points / applicable_max_points * 100
 | 40–59 | Speculative or evidence-limited |
 | 0–39 | Severe quality, valuation, governance, or disclosure concerns |
 
-These bands describe research quality and risk signals, not expected market returns.
+These bands describe research findings, not expected market returns.
+
+## First real report
+
+The repository includes an AI-assisted draft assessment of **ITG, Inc.** based on its final July 2026 prospectus:
+
+- score: **55/100**;
+- evidence coverage: **100%**;
+- confidence: **medium**;
+- status: **draft** pending human and external legal review.
+
+The second evidence pass corrected a material interpretation issue: continuing owners hold **83.90%** of combined voting power and economic interests, not 62.45%. The report also includes reproducible equity-value, enterprise-value, leverage, lock-up, and incentive-overhang calculations.
+
+See [`reports/itg-2026-07-01/README.md`](reports/itg-2026-07-01/README.md).
 
 ## Repository structure
 
 ```text
-docs/
-  methodology.md
-  evidence-policy.md
-  legal-boundary.md
-  product-roadmap.md
-schema/
-  ipo-report.schema.json
-templates/
-  ipo-analysis-template.md
-examples/
-  sample-ipo-report.md
+docs/          methodology, evidence policy, architecture, legal boundary, roadmap
+schema/        machine-readable report contract
+scripts/       deterministic report validation
+reports/       real filing-based research drafts
+examples/      fictional examples
+templates/     reusable report templates
 ```
 
-## Minimal report artifact
+## Validation
 
-Each published assessment should contain:
+GitHub Actions validates every report JSON against the schema and checks:
 
-- company, exchange, ticker, and expected offering date;
-- exact filing or source version;
-- dimension scores and applicable maximums;
-- confidence level;
-- source-linked evidence;
-- calculations and assumptions;
-- contradictions and missing information;
-- red flags and positive signals;
-- final research interpretation;
-- reviewer identity and review timestamp.
+- canonical dimension weights;
+- unique dimension and evidence IDs;
+- evidence references;
+- earned-point bounds;
+- score and coverage recomputation;
+- interpretation band;
+- publication-gate requirements.
 
-## Project status
+## Open-core boundary
 
-This repository currently defines the **v0.1 research contract**. The next phase will add deterministic validation, report generation, historical calibration, and post-IPO outcome tracking.
+Public components include methodology, schemas, examples, validation, and selected utilities. Premium datasets, production ingestion, proprietary orchestration, calibrated sub-weights, customer accounts, alerts, and commercial reports may remain separate.
 
 ## Disclaimer
 
@@ -102,4 +105,4 @@ This project provides general research and educational information. It does not 
 
 ## License
 
-Apache License 2.0. Public documentation and open components may be reused under the license. Proprietary data pipelines, premium datasets, production prompts, calibrated weights, and commercial reports may be maintained separately.
+Apache License 2.0.
