@@ -46,8 +46,8 @@ Deliverables:
 - [x] JSON report schema
 - [x] Markdown report template
 - [x] Fictional example report
-- [ ] JSON Schema validation in CI
-- [ ] Contribution and correction policy
+- [x] JSON Schema and cross-field validation in CI
+- [x] Contribution and correction policy
 
 Exit condition:
 
@@ -56,6 +56,12 @@ A reviewer can produce the same report structure without inventing fields or hid
 ## Phase 1 — Manual concierge MVP
 
 **Goal:** Validate whether investors will pay for better filtering before building a large platform.
+
+Current progress:
+
+- [x] First real AI-assisted draft report from a final public filing: ITG, Inc.
+- [ ] Independent human review of the ITG evidence and score
+- [ ] Complete valuation and legal/regulatory dimensions for ITG
 
 Deliverables:
 
@@ -208,4 +214,4 @@ Pricing should be tested with real customers rather than fixed from assumptions.
 
 ## Immediate next milestone
 
-Create the first real, human-reviewed report from a current public filing. Keep it in draft until every material score has evidence, the offering state is exact, and the publication gate passes.
+Complete the human review of the ITG draft, resolve its valuation and legal/regulatory unknowns, and preserve the report as `draft` until the publication gate passes. In parallel, choose four additional operating-company IPOs so the methodology can be tested across different business models rather than calibrated to one issuer.
