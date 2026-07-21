@@ -35,6 +35,14 @@ function scoreMovement(current: ReportSummary, previous: ReportSummary | null): 
   return `The normalized score ${direction} by ${Math.abs(Math.round(scoreDelta))} points. Evidence coverage moved ${signed(coverageDelta)} percentage points. This describes the change; it does not claim which filing fact caused it.`;
 }
 
+function latestReportForVersion(
+  reports: ReportSummary[],
+  publishedAt: string,
+): ReportSummary | null {
+  const matches = reports.filter((report) => report.filing_published_at === publishedAt);
+  return matches.at(-1) ?? null;
+}
+
 function ComparisonMetric({
   label,
   primary,
@@ -70,8 +78,14 @@ export function InterestLoopPanel({
   error: string | null;
 }) {
   const comparisonOptions = useMemo(
-    () => reports.filter((report) => report.report_id !== selected?.report_id),
-    [reports, selected?.report_id],
+    () =>
+      reports.filter(
+        (report) =>
+          report.is_latest &&
+          report.report_id !== selected?.report_id &&
+          report.issuer_name !== selected?.issuer_name,
+      ),
+    [reports, selected?.issuer_name, selected?.report_id],
   );
   const [comparisonId, setComparisonId] = useState<string>("");
   const [signals, setSignals] = useState<InterestSignalCounts>(() => readInterestSignals());
@@ -153,9 +167,7 @@ export function InterestLoopPanel({
               <summary>Inspect {history.filing.filing_type} history</summary>
               <ol className="filing-timeline">
                 {history.versions.map((version) => {
-                  const report = orderedReports.find(
-                    (item) => item.filing_published_at === version.published_at,
-                  );
+                  const report = latestReportForVersion(orderedReports, version.published_at);
                   return (
                     <li key={version.id}>
                       <span className="timeline-dot" aria-hidden="true" />
@@ -270,7 +282,7 @@ export function InterestLoopPanel({
               </p>
             </>
           ) : (
-            <p className="muted-copy">At least two visible reports are required for comparison.</p>
+            <p className="muted-copy">At least two distinct current IPOs are required for comparison.</p>
           )}
         </article>
 
