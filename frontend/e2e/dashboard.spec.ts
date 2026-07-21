@@ -49,7 +49,7 @@ test("loads reports, keeps search selection consistent, and exposes audited evid
 
   await expect(page.getByRole("heading", { name: "ITG Incorporated" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Ethos Technologies Inc\./ })).toHaveCount(0);
-  await expect(page.getByText("Final prospectus")).toBeVisible();
+  await expect(page.getByText("Final prospectus", { exact: true })).toBeVisible();
 
   const sourceLink = page.getByRole("link", { name: "Open source ↗" });
   await expect(sourceLink).toHaveAttribute("href", "https://www.sec.gov/example");
