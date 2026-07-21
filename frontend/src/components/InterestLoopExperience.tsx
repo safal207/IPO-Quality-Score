@@ -36,8 +36,16 @@ export function InterestLoopExperience() {
 
   useEffect(() => {
     const nextHost = ensureHost();
+    const trackEvidenceClick = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest("a[href]")) {
+        recordInterestSignal("evidence_opened");
+      }
+    };
+    nextHost.addEventListener("click", trackEvidenceClick);
     setHost(nextHost);
     return () => {
+      nextHost.removeEventListener("click", trackEvidenceClick);
       nextHost.remove();
     };
   }, []);
