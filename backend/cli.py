@@ -19,10 +19,16 @@ def main() -> int:
     parser.add_argument("--database-url", default=defaults.database_url)
     parser.add_argument("--reports-root", type=Path, default=defaults.reports_root)
     parser.add_argument("--schema-path", type=Path, default=defaults.schema_path)
+    parser.add_argument(
+        "--create-schema",
+        action="store_true",
+        help="Create ORM tables before import. Intended only for isolated local use; prefer Alembic migrations.",
+    )
     args = parser.parse_args()
 
     database = Database(args.database_url)
-    database.create_schema()
+    if args.create_schema:
+        database.create_schema()
     try:
         with database.session_factory() as session:
             stats = import_reports(
