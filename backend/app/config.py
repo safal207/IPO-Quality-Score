@@ -29,32 +29,32 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> "Settings":
+        defaults = cls()
         origins = tuple(
             item.strip()
             for item in os.getenv(
                 "IQS_CORS_ORIGINS",
-                "http://localhost:3000,http://localhost:5173",
+                ",".join(defaults.cors_origins),
             ).split(",")
             if item.strip()
         )
         return cls(
-            app_name=os.getenv("IQS_APP_NAME", cls.app_name),
-            app_version=os.getenv("IQS_APP_VERSION", cls.app_version),
-            database_url=os.getenv("IQS_DATABASE_URL", cls.database_url),
+            app_name=os.getenv("IQS_APP_NAME", defaults.app_name),
+            app_version=os.getenv("IQS_APP_VERSION", defaults.app_version),
+            database_url=os.getenv("IQS_DATABASE_URL", defaults.database_url),
             reports_root=Path(
-                os.getenv("IQS_REPORTS_ROOT", str(PROJECT_ROOT / "reports"))
+                os.getenv("IQS_REPORTS_ROOT", str(defaults.reports_root))
             ).resolve(),
             schema_path=Path(
-                os.getenv(
-                    "IQS_SCHEMA_PATH",
-                    str(PROJECT_ROOT / "schema" / "ipo-report.schema.json"),
-                )
+                os.getenv("IQS_SCHEMA_PATH", str(defaults.schema_path))
             ).resolve(),
             auto_create_schema=_as_bool(
-                os.getenv("IQS_AUTO_CREATE_SCHEMA"), default=True
+                os.getenv("IQS_AUTO_CREATE_SCHEMA"),
+                default=defaults.auto_create_schema,
             ),
             import_reports_on_startup=_as_bool(
-                os.getenv("IQS_IMPORT_REPORTS_ON_STARTUP"), default=True
+                os.getenv("IQS_IMPORT_REPORTS_ON_STARTUP"),
+                default=defaults.import_reports_on_startup,
             ),
             cors_origins=origins,
         )
