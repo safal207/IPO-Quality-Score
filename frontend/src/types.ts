@@ -122,3 +122,10 @@ export interface ReportProvenance {
   filing_version: FilingVersionSummary;
   sources: SourceSnapshotSummary[];
 }
+
+export interface FilingHistoryResponse {
+  issuer: IssuerSummary;
+  filing: FilingSummary;
+  versions: FilingVersionSummary[];
+  reports: ReportSummary[];
+}
