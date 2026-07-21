@@ -38,9 +38,13 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("report_id", name="uq_ipo_reports_report_id"),
     )
-    op.create_index("ix_ipo_reports_report_id", "ipo_reports", ["report_id"])
+    op.create_index(
+        "ix_ipo_reports_report_id",
+        "ipo_reports",
+        ["report_id"],
+        unique=True,
+    )
     op.create_index("ix_ipo_reports_methodology_version", "ipo_reports", ["methodology_version"])
     op.create_index("ix_ipo_reports_status", "ipo_reports", ["status"])
     op.create_index("ix_ipo_reports_issuer_name", "ipo_reports", ["issuer_name"])
