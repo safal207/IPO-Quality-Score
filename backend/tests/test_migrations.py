@@ -26,10 +26,26 @@ def test_initial_migration_up_and_down(tmp_path: Path) -> None:
     engine = create_engine(database_url)
     try:
         inspector = inspect(engine)
-        assert "ipo_reports" in inspector.get_table_names()
-        indexes = {item["name"] for item in inspector.get_indexes("ipo_reports")}
-        assert "ix_reports_ticker_filing" in indexes
-        assert "ix_ipo_reports_normalized_score" in indexes
+        assert {
+            "issuers",
+            "filings",
+            "filing_versions",
+            "source_snapshots",
+            "ipo_reports",
+            "report_source_snapshots",
+        }.issubset(set(inspector.get_table_names()))
+
+        report_indexes = {
+            item["name"] for item in inspector.get_indexes("ipo_reports")
+        }
+        assert "ix_reports_ticker_filing" in report_indexes
+        assert "ix_reports_filing_latest" in report_indexes
+        assert "ix_ipo_reports_normalized_score" in report_indexes
+
+        version_indexes = {
+            item["name"] for item in inspector.get_indexes("filing_versions")
+        }
+        assert "ix_filing_versions_filing_current" in version_indexes
 
         with engine.connect() as connection:
             context = MigrationContext.configure(connection)
@@ -41,5 +57,6 @@ def test_initial_migration_up_and_down(tmp_path: Path) -> None:
     engine = create_engine(database_url)
     try:
         assert "ipo_reports" not in inspect(engine).get_table_names()
+        assert "issuers" not in inspect(engine).get_table_names()
     finally:
         engine.dispose()
