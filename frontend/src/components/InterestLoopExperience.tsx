@@ -56,8 +56,9 @@ export function InterestLoopExperience() {
     setError(null);
     void getReports({ minScore: 0, limit: 100 }, controller.signal)
       .then((response) => {
-        setReports(response.items);
-        setSelectedId((current) => current || response.items[0]?.report_id || "");
+        const latestReports = response.items.filter((report) => report.is_latest);
+        setReports(latestReports);
+        setSelectedId((current) => current || latestReports[0]?.report_id || "");
       })
       .catch((reason: unknown) => {
         if (!controller.signal.aborted) {
