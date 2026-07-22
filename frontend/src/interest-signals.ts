@@ -1,5 +1,7 @@
 export type InterestSignal =
   | "comparison_opened"
+  | "comprehension_completed"
+  | "dimension_compared"
   | "evidence_opened"
   | "history_inspected"
   | "report_selected"
@@ -8,10 +10,12 @@ export type InterestSignal =
 export type InterestSignalCounts = Record<InterestSignal, number>;
 
 export const INTEREST_SIGNAL_EVENT = "ipo-quality-score:interest-signals";
-const STORAGE_KEY = "ipo-quality-score.interest-signals.v1";
+const STORAGE_KEY = "ipo-quality-score.interest-signals.v2";
 
 const EMPTY_COUNTS: InterestSignalCounts = {
   comparison_opened: 0,
+  comprehension_completed: 0,
+  dimension_compared: 0,
   evidence_opened: 0,
   history_inspected: 0,
   report_selected: 0,
