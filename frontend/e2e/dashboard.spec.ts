@@ -84,10 +84,17 @@ test("loads reports, keeps selection consistent, and completes the interest loop
   const sourceLink = page.getByRole("link", { name: "Open source ↗" });
   await expect(sourceLink).toHaveAttribute("href", "https://www.sec.gov/example");
   await expect(sourceLink).toHaveAttribute("rel", /noopener/);
+  const popupPromise = page.waitForEvent("popup");
+  await sourceLink.click();
+  const popup = await popupPromise;
+  await popup.close();
 
   await expect(page.getByRole("heading", { name: "Follow the idea through time." })).toBeVisible();
   await page.getByText("Inspect 424B4 history").click();
   await expect(page.getByRole("link", { name: "Open filing ↗" })).toBeVisible();
   await expect(page.getByRole("table", { name: "IPO comparison" })).toBeVisible();
   await expect(page.getByText(/Stored only in this browser tab/i)).toBeVisible();
+  await expect(
+    page.locator(".signal-counts div").filter({ hasText: "Evidence opened" }).locator("dd"),
+  ).toHaveText("1");
 });
