@@ -117,7 +117,7 @@ describe("InterestLoopPanel", () => {
     expect(screen.queryByRole("option", { name: /ethos technologies/i })).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText(/Compare LIFE with/i), itgSummary.report_id);
     expect(screen.getByRole("table", { name: "IPO comparison" })).toBeInTheDocument();
-    expect(screen.getByText(/does not recommend an allocation/i)).toBeInTheDocument();
+    expect(screen.getByText(/does not turn the table into an allocation recommendation/i)).toBeInTheDocument();
   });
 
   it("keeps only aggregate session counts and clears them", async () => {
@@ -133,8 +133,10 @@ describe("InterestLoopPanel", () => {
       />,
     );
 
-    expect(screen.getByText(/No identifiers, report IDs, timestamps, cookies, or network upload/i)).toBeInTheDocument();
-    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(
+      screen.getByText(/No identifiers, report IDs, answers, timestamps, cookies, or network upload/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("1 session signals")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Clear local trail" }));
     expect(screen.getByText("0 session signals")).toBeInTheDocument();
   });
