@@ -52,7 +52,9 @@ describe("dimension comparison and comprehension", () => {
       ...itgDetail,
       document: {
         ...itgDetail.document,
-        dimensions: itgDetail.document.dimensions?.filter((dimension) => dimension.id !== "governance"),
+        dimensions: (itgDetail.document.dimensions ?? []).filter(
+          (dimension) => dimension.id !== "governance",
+        ),
       },
     };
     const rows = buildDimensionRows(ethosDetail, secondaryWithoutGovernance);
