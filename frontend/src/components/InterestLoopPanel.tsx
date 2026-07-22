@@ -90,6 +90,13 @@ export function InterestLoopPanel({
     return index > 0 ? orderedReports[index - 1] ?? null : null;
   }, [orderedReports, selected]);
 
+  const methodologyCompatibleReports = useMemo(
+    () =>
+      selected
+        ? reports.filter((report) => report.methodology_version === selected.methodology_version)
+        : [],
+    [reports, selected],
+  );
   const totalSignals = Object.values(signals).reduce((sum, value) => sum + value, 0);
 
   return (
@@ -182,7 +189,7 @@ export function InterestLoopPanel({
           )}
         </article>
 
-        <DimensionComprehensionLab selected={selected} reports={reports} />
+        <DimensionComprehensionLab selected={selected} reports={methodologyCompatibleReports} />
 
         <article className="interest-card">
           <div className="section-heading">
