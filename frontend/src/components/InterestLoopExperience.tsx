@@ -38,14 +38,17 @@ export function InterestLoopExperience() {
     const nextHost = ensureHost();
     const trackEvidenceClick = (event: Event) => {
       const target = event.target;
-      if (target instanceof Element && target.closest("a[href]")) {
+      if (
+        target instanceof Element &&
+        target.closest(".evidence-item a[href], .filing-timeline a[href]")
+      ) {
         recordInterestSignal("evidence_opened");
       }
     };
-    nextHost.addEventListener("click", trackEvidenceClick);
+    document.addEventListener("click", trackEvidenceClick);
     setHost(nextHost);
     return () => {
-      nextHost.removeEventListener("click", trackEvidenceClick);
+      document.removeEventListener("click", trackEvidenceClick);
       nextHost.remove();
     };
   }, []);
