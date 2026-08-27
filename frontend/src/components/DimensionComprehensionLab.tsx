@@ -20,7 +20,7 @@ function loadReportDetail(reportId: string): Promise<ReportDetail> {
 }
 
 function dimensionPercent(dimension: ReportDimension | null): number | null {
-  if (!dimension || dimension.max_points <= 0) {
+  if (!dimension || dimension.status !== "scored" || dimension.max_points <= 0) {
     return null;
   }
   return (dimension.earned_points / dimension.max_points) * 100;
@@ -164,7 +164,7 @@ function DimensionTable({
           <div role="cell">
             <strong>{row.primaryPercent === null ? "—" : `${Math.round(row.primaryPercent)}%`}</strong>
             <small>
-              {row.primary
+              {row.primary && row.primaryPercent !== null
                 ? `${row.primary.earned_points}/${row.primary.max_points} · ${row.primary.confidence}`
                 : "not scored"}
             </small>
@@ -172,7 +172,7 @@ function DimensionTable({
           <div role="cell">
             <strong>{row.secondaryPercent === null ? "—" : `${Math.round(row.secondaryPercent)}%`}</strong>
             <small>
-              {row.secondary
+              {row.secondary && row.secondaryPercent !== null
                 ? `${row.secondary.earned_points}/${row.secondary.max_points} · ${row.secondary.confidence}`
                 : "not scored"}
             </small>
@@ -181,19 +181,21 @@ function DimensionTable({
             <strong>{row.delta === null ? "—" : `${signed(row.delta)} pp`}</strong>
             <small>primary minus comparison</small>
           </div>
-          <details className="dimension-judgments">
-            <summary>Read judgments</summary>
-            <div>
-              <p>
-                <strong>{primary.ticker ?? primary.issuer_name}:</strong>{" "}
-                {row.primary?.judgment ?? "No scored judgment is available."}
-              </p>
-              <p>
-                <strong>{secondary.ticker ?? secondary.issuer_name}:</strong>{" "}
-                {row.secondary?.judgment ?? "No scored judgment is available."}
-              </p>
-            </div>
-          </details>
+          <div className="dimension-judgments" role="cell">
+            <details>
+              <summary>Read judgments</summary>
+              <div>
+                <p>
+                  <strong>{primary.ticker ?? primary.issuer_name}:</strong>{" "}
+                  {row.primary?.judgment ?? "No scored judgment is available."}
+                </p>
+                <p>
+                  <strong>{secondary.ticker ?? secondary.issuer_name}:</strong>{" "}
+                  {row.secondary?.judgment ?? "No scored judgment is available."}
+                </p>
+              </div>
+            </details>
+          </div>
         </article>
       ))}
     </div>
