@@ -54,15 +54,30 @@ describe("dimension comparison and comprehension", () => {
         document: {
           ...ethosDetail.document,
           dimensions: (ethosDetail.document.dimensions ?? []).map((dimension) =>
-            dimension.id === "governance" ? { ...dimension, status } : dimension,
+            dimension.id === "governance"
+              ? { ...dimension, status, max_points: 10 }
+              : dimension,
           ),
         },
       };
-      const rows = buildDimensionRows(primary, itgDetail);
+      const secondary = {
+        ...itgDetail,
+        document: {
+          ...itgDetail.document,
+          dimensions: (itgDetail.document.dimensions ?? []).map((dimension) =>
+            dimension.id === "governance"
+              ? { ...dimension, status, max_points: 10 }
+              : dimension,
+          ),
+        },
+      };
+      const rows = buildDimensionRows(primary, secondary);
       const governance = rows.find((row) => row.id === "governance");
 
+      expect(governance?.primary?.max_points).toBe(10);
+      expect(governance?.secondary?.max_points).toBe(10);
       expect(governance?.primaryPercent).toBeNull();
-      expect(governance?.secondaryPercent).toBe(80);
+      expect(governance?.secondaryPercent).toBeNull();
       expect(governance?.delta).toBeNull();
       expect(
         evaluateComprehension(ethosSummary, itgSummary, rows, {
@@ -103,10 +118,17 @@ describe("dimension comparison and comprehension", () => {
     });
     const cells = within(governanceRow).getAllByRole("cell");
     expect(cells).toHaveLength(5);
-    expect(within(cells[1]).getByText("50%")).toBeVisible();
-    expect(within(cells[2]).getByText("80%")).toBeVisible();
-    expect(within(cells[3]).getByText("-30 pp")).toBeVisible();
-    expect(within(cells[4]).getByText("Read judgments")).toBeVisible();
+    const primaryCell = cells[1];
+    const secondaryCell = cells[2];
+    const deltaCell = cells[3];
+    const judgmentsCell = cells[4];
+    if (!primaryCell || !secondaryCell || !deltaCell || !judgmentsCell) {
+      throw new Error("Governance row is missing comparison cells");
+    }
+    expect(within(primaryCell).getByText("50%")).toBeVisible();
+    expect(within(secondaryCell).getByText("80%")).toBeVisible();
+    expect(within(deltaCell).getByText("-30 pp")).toBeVisible();
+    expect(within(judgmentsCell).getByText("Read judgments")).toBeVisible();
 
     await user.click(screen.getByLabelText("They are equal"));
     await user.click(screen.getByLabelText("Governance and shareholder alignment"));
