@@ -1,5 +1,6 @@
 import type {
   ReportDetail,
+  ReportDimension,
   ReportListResponse,
   ReportProvenance,
   ReportSummary,
@@ -44,6 +45,70 @@ export const reportsResponse: ReportListResponse = {
   offset: 0,
 };
 
+function dimensionsFor(summary: ReportSummary): ReportDimension[] {
+  if (summary.report_id === ethosSummary.report_id) {
+    return [
+      {
+        id: "revenue_durability",
+        name: "Revenue growth and durability",
+        status: "scored",
+        max_points: 15,
+        earned_points: 10,
+        confidence: "medium",
+        judgment: "Growth is attractive, but customer concentration remains material.",
+      },
+      {
+        id: "governance",
+        name: "Governance and shareholder alignment",
+        status: "scored",
+        max_points: 10,
+        earned_points: 5,
+        confidence: "medium",
+        judgment: "Control protections reduce minority shareholder influence.",
+      },
+      {
+        id: "offering_alignment",
+        name: "Offering alignment and use of proceeds",
+        status: "scored",
+        max_points: 10,
+        earned_points: 8,
+        confidence: "high",
+        judgment: "Most proceeds support operating growth rather than insider liquidity.",
+      },
+    ];
+  }
+
+  return [
+    {
+      id: "revenue_durability",
+      name: "Revenue growth and durability",
+      status: "scored",
+      max_points: 15,
+      earned_points: 7,
+      confidence: "medium",
+      judgment: "Revenue growth is positive, but durability evidence is less developed.",
+    },
+    {
+      id: "governance",
+      name: "Governance and shareholder alignment",
+      status: "scored",
+      max_points: 10,
+      earned_points: 8,
+      confidence: "high",
+      judgment: "The governance structure provides stronger independent oversight.",
+    },
+    {
+      id: "offering_alignment",
+      name: "Offering alignment and use of proceeds",
+      status: "scored",
+      max_points: 10,
+      earned_points: 6,
+      confidence: "medium",
+      judgment: "Proceeds support growth, though dilution and selling-holder exposure remain.",
+    },
+  ];
+}
+
 function detailFor(summary: ReportSummary): ReportDetail {
   return {
     summary,
@@ -57,17 +122,7 @@ function detailFor(summary: ReportSummary): ReportDetail {
         coverage_percent: summary.coverage_percent,
         interpretation_band: "meaningful_risks",
       },
-      dimensions: [
-        {
-          id: "revenue_durability",
-          name: "Revenue growth and durability",
-          status: "scored",
-          max_points: 15,
-          earned_points: 10,
-          confidence: "medium",
-          judgment: "Growth is attractive but concentration remains material.",
-        },
-      ],
+      dimensions: dimensionsFor(summary),
       red_flags: [
         {
           title: "Customer concentration",

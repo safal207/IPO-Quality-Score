@@ -51,6 +51,10 @@ jobs:
         working-directory: frontend
         run: npx vitest run src/interest-loop.test.tsx --reporter=verbose
 
+      - name: Run dimension comprehension tests
+        working-directory: frontend
+        run: npx vitest run src/dimension-comprehension.test.tsx --reporter=verbose
+
       - name: Type-check and build
         working-directory: frontend
         run: npm run build

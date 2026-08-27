@@ -36,6 +36,11 @@ const duplicateIssuerCurrentReport: ReportSummary = {
   report_version: "0.1.1",
 };
 
+const incompatibleMethodologyReport: ReportSummary = {
+  ...itgSummary,
+  methodology_version: "0.2",
+};
+
 const history: FilingHistoryResponse = {
   issuer: {
     id: 1,
@@ -117,7 +122,22 @@ describe("InterestLoopPanel", () => {
     expect(screen.queryByRole("option", { name: /ethos technologies/i })).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText(/Compare LIFE with/i), itgSummary.report_id);
     expect(screen.getByRole("table", { name: "IPO comparison" })).toBeInTheDocument();
-    expect(screen.getByText(/does not recommend an allocation/i)).toBeInTheDocument();
+    expect(screen.getByText(/does not turn the table into an allocation recommendation/i)).toBeInTheDocument();
+  });
+
+  it("does not compare reports across methodology versions", () => {
+    render(
+      <InterestLoopPanel
+        selected={currentReport}
+        reports={[currentReport, incompatibleMethodologyReport]}
+        history={history}
+        loading={false}
+        error={null}
+      />,
+    );
+
+    expect(screen.queryByRole("option", { name: /ITG Incorporated/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/At least two distinct current IPOs are required/i)).toBeVisible();
   });
 
   it("keeps only aggregate session counts and clears them", async () => {
@@ -133,8 +153,10 @@ describe("InterestLoopPanel", () => {
       />,
     );
 
-    expect(screen.getByText(/No identifiers, report IDs, timestamps, cookies, or network upload/i)).toBeInTheDocument();
-    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(
+      screen.getByText(/No identifiers, report IDs, answers, timestamps, cookies, or network upload/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("1 session signals")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Clear local trail" }));
     expect(screen.getByText("0 session signals")).toBeInTheDocument();
   });

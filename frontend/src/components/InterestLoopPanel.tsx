@@ -7,6 +7,7 @@ import {
   type InterestSignalCounts,
 } from "../interest-signals";
 import type { FilingHistoryResponse, ReportSummary } from "../types";
+import { DimensionComprehensionLab } from "./DimensionComprehensionLab";
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("en", {
@@ -43,27 +44,6 @@ function latestReportForVersion(
   return matches.at(-1) ?? null;
 }
 
-function ComparisonMetric({
-  label,
-  primary,
-  secondary,
-  delta,
-}: {
-  label: string;
-  primary: string;
-  secondary: string;
-  delta?: string;
-}) {
-  return (
-    <div className="comparison-metric">
-      <span>{label}</span>
-      <strong>{primary}</strong>
-      <strong>{secondary}</strong>
-      <small>{delta ?? "—"}</small>
-    </div>
-  );
-}
-
 export function InterestLoopPanel({
   selected,
   reports,
@@ -77,24 +57,7 @@ export function InterestLoopPanel({
   loading: boolean;
   error: string | null;
 }) {
-  const comparisonOptions = useMemo(
-    () =>
-      reports.filter(
-        (report) =>
-          report.is_latest &&
-          report.report_id !== selected?.report_id &&
-          report.issuer_name !== selected?.issuer_name,
-      ),
-    [reports, selected?.issuer_name, selected?.report_id],
-  );
-  const [comparisonId, setComparisonId] = useState<string>("");
   const [signals, setSignals] = useState<InterestSignalCounts>(() => readInterestSignals());
-
-  useEffect(() => {
-    if (!comparisonOptions.some((report) => report.report_id === comparisonId)) {
-      setComparisonId(comparisonOptions[0]?.report_id ?? "");
-    }
-  }, [comparisonId, comparisonOptions]);
 
   useEffect(() => {
     const update = (event: Event) => {
@@ -105,7 +68,6 @@ export function InterestLoopPanel({
     return () => window.removeEventListener(INTEREST_SIGNAL_EVENT, update);
   }, []);
 
-  const comparison = comparisonOptions.find((report) => report.report_id === comparisonId) ?? null;
   const orderedReports = useMemo(
     () =>
       [...(history?.reports ?? [])].sort(
@@ -128,6 +90,13 @@ export function InterestLoopPanel({
     return index > 0 ? orderedReports[index - 1] ?? null : null;
   }, [orderedReports, selected]);
 
+  const methodologyCompatibleReports = useMemo(
+    () =>
+      selected
+        ? reports.filter((report) => report.methodology_version === selected.methodology_version)
+        : [],
+    [reports, selected],
+  );
   const totalSignals = Object.values(signals).reduce((sum, value) => sum + value, 0);
 
   return (
@@ -220,71 +189,7 @@ export function InterestLoopPanel({
           )}
         </article>
 
-        <article className="interest-card interest-card--wide">
-          <div className="section-heading">
-            <div>
-              <span className="section-kicker">Comparison</span>
-              <h3>Two IPOs, separate evidence.</h3>
-            </div>
-          </div>
-          {selected && comparisonOptions.length > 0 ? (
-            <>
-              <label className="comparison-select">
-                <span>Compare {selected.ticker ?? selected.issuer_name} with</span>
-                <select
-                  value={comparisonId}
-                  onChange={(event) => {
-                    setComparisonId(event.target.value);
-                    recordInterestSignal("comparison_opened");
-                  }}
-                >
-                  {comparisonOptions.map((report) => (
-                    <option key={report.report_id} value={report.report_id}>
-                      {report.ticker ?? report.issuer_name} · {report.issuer_name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {comparison ? (
-                <div className="comparison-table" role="table" aria-label="IPO comparison">
-                  <div className="comparison-heading" role="row">
-                    <span>Metric</span>
-                    <strong>{selected.ticker ?? selected.issuer_name}</strong>
-                    <strong>{comparison.ticker ?? comparison.issuer_name}</strong>
-                    <span>Delta</span>
-                  </div>
-                  <ComparisonMetric
-                    label="Score"
-                    primary={String(Math.round(selected.normalized_score))}
-                    secondary={String(Math.round(comparison.normalized_score))}
-                    delta={signed(selected.normalized_score - comparison.normalized_score)}
-                  />
-                  <ComparisonMetric
-                    label="Coverage"
-                    primary={`${Math.round(selected.coverage_percent)}%`}
-                    secondary={`${Math.round(comparison.coverage_percent)}%`}
-                    delta={`${signed(selected.coverage_percent - comparison.coverage_percent)} pp`}
-                  />
-                  <ComparisonMetric
-                    label="Confidence"
-                    primary={selected.overall_confidence}
-                    secondary={comparison.overall_confidence}
-                  />
-                  <ComparisonMetric
-                    label="Status"
-                    primary={selected.status}
-                    secondary={comparison.status}
-                  />
-                </div>
-              ) : null}
-              <p className="boundary-note">
-                Comparison exposes differences; it does not recommend an allocation or predict returns.
-              </p>
-            </>
-          ) : (
-            <p className="muted-copy">At least two distinct current IPOs are required for comparison.</p>
-          )}
-        </article>
+        <DimensionComprehensionLab selected={selected} reports={methodologyCompatibleReports} />
 
         <article className="interest-card">
           <div className="section-heading">
@@ -298,11 +203,13 @@ export function InterestLoopPanel({
             <div><dt>Search started</dt><dd>{signals.search_used}</dd></div>
             <div><dt>History inspected</dt><dd>{signals.history_inspected}</dd></div>
             <div><dt>Comparisons changed</dt><dd>{signals.comparison_opened}</dd></div>
+            <div><dt>Dimensions inspected</dt><dd>{signals.dimension_compared}</dd></div>
+            <div><dt>Comprehension completed</dt><dd>{signals.comprehension_completed}</dd></div>
             <div><dt>Evidence opened</dt><dd>{signals.evidence_opened}</dd></div>
           </dl>
           <p className="privacy-note">
-            Stored only in this browser tab. No identifiers, report IDs, timestamps, cookies, or network
-            upload.
+            Stored only in this browser tab. No identifiers, report IDs, answers, timestamps, cookies, or
+            network upload.
           </p>
           <button className="secondary-button" type="button" onClick={() => setSignals(clearInterestSignals())}>
             Clear local trail
