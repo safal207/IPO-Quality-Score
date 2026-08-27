@@ -6,6 +6,25 @@
 
 <!-- Explain the user, analyst, or auditability problem this change solves. -->
 
+## Change classification
+
+Complete one path:
+
+- [ ] **Routine** — typo, formatting, dependency metadata, or another change with no product behavior, contract, claim, data, security, or operational effect.
+- [ ] **Implementation-only** — internal code or test work that preserves user-visible behavior and published contracts.
+- [ ] **Product-affecting** — changes behavior, UI, API/schema, methodology, evidence, claims, data handling, security, or an operational decision.
+- [ ] **Uncertain** — use the product-affecting path until review establishes a narrower class.
+
+Routine and implementation-only changes may complete the short form and mark the full Interest Time Vector below N/A. Product-affecting and uncertain changes must complete the full path.
+
+### Short-form proportionality path
+
+- Classification and reason:
+- Relevant exact-head validation:
+- Preserved user, contract, evidence, and authority boundaries:
+- Reversal or rollback:
+- Why no product-value hypothesis is introduced:
+
 ## Interest Time Vector
 
 ### Idea space
@@ -21,9 +40,10 @@
 
 - Main hypothesis:
 - Causal chain from this change to user outcome:
-- Observed or proven links:
+- Proven links (exact-head implementation evidence):
+- Observed links (real user or operational evidence):
 - Hypothesized links:
-- Unknowns or contradictions:
+- Unknown or contradictory links:
 - Fastest falsification signal:
 
 ### Implementation space
@@ -48,6 +68,18 @@
 - [ ] Experiment
 - [ ] Revise
 - [ ] Stop
+
+For an **Experiment**, predefine:
+
+- Target participant or customer segment:
+- Sample count and recruitment split:
+- Baseline or comparator:
+- Consumer comprehension task and success rate:
+- Customer workflow, purchasing, or adoption outcome (reported separately):
+- Time-saving calculation and minimum improvement:
+- Repeat-use event and observation window:
+- Revise trigger:
+- Stop trigger:
 
 <!-- Use docs/interest-time-vector.md for definitions and review guidance. -->
 
