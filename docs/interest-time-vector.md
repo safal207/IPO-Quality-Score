@@ -178,6 +178,19 @@ Before review, inspect the change at multiple future slices.
 
 ---
 
+## Change classes and proportional review
+
+“Meaningful” means a change can alter user behavior, a published interface or schema, methodology, evidence or claim semantics, data handling, security, operational authority, or a product decision.
+
+Use one of these classes:
+
+- **Routine:** spelling, formatting, or metadata-only work with no effect on behavior, contracts, claims, data, security, or operations.
+- **Implementation-only:** internal refactoring or test maintenance that preserves user-visible behavior and published contracts.
+- **Product-affecting:** any change to behavior, UI, API/schema, methodology, evidence, claims, data handling, security, or operational decisions.
+- **Uncertain:** treat as product-affecting until review proves otherwise.
+
+Routine and implementation-only work may use a short-form review containing the classification reason, exact-head validation, preserved boundaries, and rollback path. The full Idea/Thought/Implementation protocol is required for product-affecting and uncertain changes. A reviewer may escalate the class whenever the diff contradicts the stated boundary; authors must not use the exemption to hide product or authority changes.
+
 ## Pre-review protocol
 
 A reviewer should be able to answer the following before approving a meaningful change.
