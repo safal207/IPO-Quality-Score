@@ -88,6 +88,20 @@ Use **Stop** for this experiment when:
 - users repeatedly infer return forecasts or allocation advice despite the boundaries;
 - the target workflow is actually alerts, export, or committee collaboration rather than interactive comparison.
 
+## Downstream outcome validation
+
+The **Proceed** decision above is limited to immediate comprehension and workflow usability. This PR does not claim durable understanding, saved research time, repeat use, willingness to pay, or product-market fit. Those outcomes require separate preregistered follow-ups:
+
+| Outcome | Required follow-up measure | Minimum decision rule |
+| --- | --- | --- |
+| Durable understanding | Repeat the Score, dimension-gap, source, and boundary questions after seven days without showing the interface first | At least 80% retain all four concepts without facilitator correction |
+| Saved research time | Randomized within-participant crossover against the same raw-filing tasks, recording correct-task completion time in both conditions | Median time falls by at least 20% with no reduction in task accuracy |
+| Repeat use | Four-week pilot using distinct real research events, with de-identified session counts and a stated return reason | At least 50% of the target segment returns for two or more separate research events |
+| Willingness to pay | Segment-specific pricing interview followed by an optional paid-pilot offer; report accepted and rejected price points separately | No willingness-to-pay claim from stated preference alone; require at least one completed paid pilot |
+| Product-market fit | A separately powered target-segment study combining repeat use, paid retention, and the standard “very disappointed” question | Do not claim product-market fit from this 5–7 participant comprehension study |
+
+Predefine the target segment, sample size, comparison reports, time window, and missing-data treatment before each follow-up. Consumer comprehension, analyst workflow efficiency, purchasing behavior, and retention must be reported as separate outcomes.
+
 ## Observation sheet
 
 For each participant, store only:
