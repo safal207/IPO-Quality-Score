@@ -47,6 +47,33 @@ describe("dimension comparison and comprehension", () => {
     ).toBe(3);
   });
 
+  it("keeps every non-scored status unavailable and out of gap selection", () => {
+    for (const status of ["unknown", "blocked", "not_applicable"] as const) {
+      const primary = {
+        ...ethosDetail,
+        document: {
+          ...ethosDetail.document,
+          dimensions: (ethosDetail.document.dimensions ?? []).map((dimension) =>
+            dimension.id === "governance" ? { ...dimension, status } : dimension,
+          ),
+        },
+      };
+      const rows = buildDimensionRows(primary, itgDetail);
+      const governance = rows.find((row) => row.id === "governance");
+
+      expect(governance?.primaryPercent).toBeNull();
+      expect(governance?.secondaryPercent).toBe(80);
+      expect(governance?.delta).toBeNull();
+      expect(
+        evaluateComprehension(ethosSummary, itgSummary, rows, {
+          coverage: "equal",
+          widest: "governance",
+          boundary: "future_returns",
+        }),
+      ).toBe(2);
+    }
+  });
+
   it("keeps unmatched dimensions visible instead of inventing a zero score", () => {
     const secondaryWithoutGovernance = {
       ...itgDetail,
@@ -71,11 +98,15 @@ describe("dimension comparison and comprehension", () => {
 
     await user.click(screen.getByText("Inspect dimension comparison"));
     const table = await screen.findByRole("table", { name: "Dimension comparison" });
-    const governanceRow = within(table).getByText("Governance and shareholder alignment").closest("article");
-    expect(governanceRow).not.toBeNull();
-    expect(within(governanceRow as HTMLElement).getByText("50%")).toBeVisible();
-    expect(within(governanceRow as HTMLElement).getByText("80%")).toBeVisible();
-    expect(within(governanceRow as HTMLElement).getByText("-30 pp")).toBeVisible();
+    const governanceRow = within(table).getByRole("row", {
+      name: /Governance and shareholder alignment/,
+    });
+    const cells = within(governanceRow).getAllByRole("cell");
+    expect(cells).toHaveLength(5);
+    expect(within(cells[1]).getByText("50%")).toBeVisible();
+    expect(within(cells[2]).getByText("80%")).toBeVisible();
+    expect(within(cells[3]).getByText("-30 pp")).toBeVisible();
+    expect(within(cells[4]).getByText("Read judgments")).toBeVisible();
 
     await user.click(screen.getByLabelText("They are equal"));
     await user.click(screen.getByLabelText("Governance and shareholder alignment"));
