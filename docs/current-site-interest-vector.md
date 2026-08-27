@@ -209,42 +209,44 @@ Determine whether target consumers gain enough value from evidence-first IPO scr
 
 ### Target participants
 
-Start with a small bounded group of:
+Use two explicit cohorts and do not combine their outcomes:
 
-- active IPO researchers;
-- equity analysts;
-- financial-platform product managers;
-- experienced self-directed investors.
+- **Consumer comprehension cohort (8 participants):** 4 active IPO/equity researchers and 4 experienced self-directed investors or advisers.
+- **Customer workflow cohort (4 participants):** research-team leads or financial-platform product managers who influence tooling or purchasing.
+
+A participant may not count in both cohorts. Record the segment, recruitment source, and exclusions before analysis.
 
 ### Tasks
 
 Ask each participant to:
 
-1. choose one of two IPO reports;
-2. explain the score in their own words;
-3. identify one material risk and its source;
-4. identify what remains unknown;
-5. compare the report with their normal research process;
-6. state what would make them return after a filing amendment.
+1. complete the same bounded screening task with raw filings or their normal tool as a timed baseline;
+2. choose one of two IPO reports in this interface;
+3. explain Score, Coverage, and Confidence as separate concepts;
+4. identify one material risk, its source, and one unknown;
+5. compare the report with the baseline workflow;
+6. return for a second session involving a different filing or amendment within 30 days;
+7. for the customer cohort only, describe the workflow integration, approval path, and purchasing evidence required for a pilot.
 
 ### Measurements
 
 Capture:
 
-- time to first report selection;
-- time to first evidence inspection;
-- whether score, coverage, and confidence are explained correctly;
-- whether the participant finds a material source without assistance;
-- perceived research time saved;
-- the next feature requested before they would return;
-- willingness to test an amendment alert, comparison, or export workflow.
+- baseline and interface task-completion time, using (baseline - interface) / baseline for the time-saving rate;
+- task accuracy in both conditions;
+- whether Score, Coverage, and Confidence are all explained correctly;
+- whether the participant finds the specified material source without assistance;
+- consumer comprehension and customer workflow/purchasing outcomes as separate measures;
+- a repeat-use event, defined as completing the second distinct filing or amendment task within 30 days;
+- accepted or rejected pilot terms; stated interest alone is not willingness-to-pay evidence.
 
 ### Decision thresholds
 
-- **Proceed:** most target participants can explain the assessment and report a meaningful reduction in initial screening effort.
-- **Experiment further:** comprehension is good, but repeat-use or customer value remains unclear.
-- **Revise:** participants repeatedly misunderstand score versus confidence, or evidence inspection adds friction without useful clarity.
-- **Stop:** the workflow does not improve screening compared with existing tools for the selected target users.
+- **Proceed to a repeat-use pilot:** all 8 consumer sessions are complete, at least 6 of 8 participants correctly explain Score, Coverage, and Confidence, at least 6 of 8 find the required source without assistance, median screening time improves by at least 20% versus the counterbalanced baseline, and task accuracy does not fall.
+- **Proceed to a customer pilot:** the consumer threshold passes, all 4 customer-workflow sessions are complete, at least 3 of 4 identify a concrete integration and approval path, and at least one customer accepts a bounded paid-pilot offer. Do not infer willingness to pay from feature interest.
+- **Experiment further:** comprehension passes but the time, repeat-use, or customer-pilot threshold is not yet measured.
+- **Revise:** fewer than 6 of 8 consumers separate Score from Coverage and Confidence, median time improves by less than 20%, accuracy falls, or fewer than half complete the defined return event.
+- **Stop:** fewer than 4 of 8 consumers complete the core task correctly, the interface increases median correct-task time, or no customer participant identifies a real workflow after the bounded revision cycle.
 
 ## 6. Next bounded product slice
 
